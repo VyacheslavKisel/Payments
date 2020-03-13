@@ -1,0 +1,42 @@
+﻿@model Payments.ViewModels.Account.RegisterModel
+
+@{
+    ViewBag.Title = "Регистрация пользователя";
+}
+
+<h2>Register</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    <div>
+        <hr />
+        @Html.ValidationSummary(true)
+        <p>
+            Адрес электронной почты
+            <div>
+                @Html.EditorFor(m => m.Email)
+                @Html.ValidationMessageFor(m => m.Email)
+            </div>
+        </p>
+        <p>
+            Пароль
+            <div>
+                @Html.EditorFor(m => m.Password)
+                @Html.ValidationMessageFor(m => m.Password)
+            </div>
+        </p>
+        <p>
+            Потвердите пароль
+            <div>
+                @Html.EditorFor(m => m.PasswordConfirm)
+                @Html.ValidationMessageFor(m => m.PasswordConfirm)
+            </div>
+        </p>
+    </div>
+    <input type="submit" value="Зарегистрироваться" />
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

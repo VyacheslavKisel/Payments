@@ -1,0 +1,49 @@
+﻿@model IEnumerable<Payments.ViewModels.BankAccount.BankAccountUserDataForAdmin>
+
+@{
+    ViewBag.Title = "BankAccountsDataForAdmin";
+}
+
+<h2>BankAccountsDataForAdmin</h2>
+
+<table class="table">
+    @foreach (var item in Model)
+    {
+    <tr>
+        <td>
+            @Html.DisplayFor(modelItem => item.Id)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.NumberCard)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Name)
+        </td>
+        <td>
+            @Html.DisplayFor(modelItem => item.Balance)
+        </td>
+        @*Сделать настоящие ссылки*@
+        @if (item.LockoutEnabled)
+        {
+            <td>
+                Счет заблокирован
+            </td>
+            @*<td>
+                @Html.ActionLink("Разблокировать счет", "UnBlockBankAccount", "BankAccount", new { id = item.Id })
+            </td>*@
+            <td>
+                @Html.RouteLink("Разблокировать счет", new { controller = "BankAccount", action = "UnBlockBankAccount", id = item.Id })
+            </td>
+        }
+        else
+        {
+            @*<td>
+                @Html.ActionLink("Заблокировать счет", "BlockBankAccount", "BankAccount", new { id = item.Id })
+            </td>*@
+            <td>
+                @Html.RouteLink("Заблокировать счет", new { controller = "BankAccount", action = "BlockBankAccount", id = item.Id })
+            </td>
+        }
+    </tr>
+    }
+</table>

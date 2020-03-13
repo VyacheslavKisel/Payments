@@ -1,0 +1,32 @@
+﻿@model IEnumerable<Payments.ViewModels.BankAccount.BankAccountUser>
+
+@{
+    ViewBag.Title = "Личный кабинет";
+}
+
+<h2>Счета</h2>
+
+@Html.ActionLink("Создать счет", "CreateBankAccount", "BankAccount")
+
+<table class="table">
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Id)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.NumberCard)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Balance)
+            </td>
+            <td>
+                @Html.RouteLink("Платежи", new { controller = "Payment", action = "PaymentData", id = item.Id })
+            </td>
+        </tr>
+    }
+</table>

@@ -1,0 +1,52 @@
+﻿@model Payments.ViewModels.Account.UserBlockData
+
+@{
+    ViewBag.Title = "Block user";
+}
+
+<h2>Information about this user</h2>
+<br />
+<hr />
+
+<dl class="dl-horizontal">
+    <dt>
+        @Html.DisplayNameFor(model => model.Email)
+    </dt>
+
+    <dd>
+        @Html.DisplayFor(model => model.Email)
+    </dd>
+
+    <dt>
+        @Html.DisplayNameFor(model => model.LockoutEnabled)
+    </dt>
+
+    <dd>
+        @Html.DisplayFor(model => model.LockoutEnabled)
+    </dd>
+
+    <dt>
+        @Html.DisplayNameFor(model => model.DateTimeBlock)
+    </dt>
+
+    <dd>
+        @Html.DisplayFor(model => model.DateTimeBlock)
+    </dd>
+</dl>
+<hr />
+<br />
+@using (Html.BeginForm("BlockUserAccount", "Account", FormMethod.Post))
+{
+    @Html.ValidationSummary(true)
+    @Html.AntiForgeryToken()
+    <div class="form-actions no-color">
+        <input type="hidden" name="UserId" value="@Model.UserId" />
+        @Html.Editor("DateTimeBlock", new { type = "datetime-local"})
+        @Html.ValidationMessage("DateTimeBlock")
+        <input type="submit" value="Block user" class="btn btn-default" />
+    </div>
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

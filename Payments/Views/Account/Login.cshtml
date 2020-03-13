@@ -1,0 +1,26 @@
+﻿@model Payments.ViewModels.Account.LoginModel
+
+@{
+    ViewBag.Title = "Login";
+}
+
+<h2>Вход на сайт</h2>
+@Html.ActionLink("Зарегистрироваться", "Register", "Account")
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div>
+        @Html.ValidationSummary()
+        <p>
+            <label>Email</label>
+            @Html.EditorFor(m => m.Email)
+        </p>
+        <p>
+            <label>Пароль</label>
+            @Html.EditorFor(m => m.Password)
+        </p>
+        <input type="submit" value="Войти" />
+    </div>
+}

@@ -1,0 +1,52 @@
+﻿@*НЕ ViewModel*@
+@model IEnumerable<Service.Models.BankAccount>
+
+@{
+    ViewBag.Title = "Безопасность";
+}
+
+<h2>Счета</h2>
+
+<table class="table">
+    @foreach (var item in Model)
+    {
+        <tr>
+            @if (item.LockoutEnabled)
+            {
+                <td>
+                    @Html.DisplayFor(modelItem => item.Id)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.NumberCard)
+                </td>
+                <td>
+                    Счет заблокирован
+                </td>
+                @*<td>
+                    @Html.RouteLink("Подать заявку на разблокирование счета", new { controller = "BankAccount", action = "UnBlockBankAccount", id = item.Id })
+                </td>*@
+                <td>
+                    Подать заявку на разблокирование счета
+                </td>
+            }
+            else
+            {
+                <td>
+                    @Html.DisplayFor(modelItem => item.Id)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.NumberCard)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Name)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Balance)
+                </td>
+                <td>
+                    @Html.RouteLink("Заблокировать счет", new { controller = "BankAccount", action = "BlockSelfBankAccount", id = item.Id })
+                </td>
+            }
+        </tr>
+    }
+</table>
