@@ -9,32 +9,47 @@
 @using (Html.BeginForm())
 {
     @Html.AntiForgeryToken()
-    <div>
-        <hr />
-        @Html.ValidationSummary(true)
-        <p>
-            Адрес электронной почты
-            <div>
-                @Html.EditorFor(m => m.Email)
-                @Html.ValidationMessageFor(m => m.Email)
-            </div>
-        </p>
-        <p>
-            Пароль
-            <div>
-                @Html.EditorFor(m => m.Password)
-                @Html.ValidationMessageFor(m => m.Password)
-            </div>
-        </p>
-        <p>
-            Потвердите пароль
-            <div>
-                @Html.EditorFor(m => m.PasswordConfirm)
-                @Html.ValidationMessageFor(m => m.PasswordConfirm)
-            </div>
-        </p>
+    <hr />
+    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+    <div class="form-group">
+        @Html.LabelFor(model => model.Email, htmlAttributes: new { @class = "control-label" })
+        @Html.EditorFor(model => model.Email, new
+   {
+       htmlAttributes = new
+       {
+           @class = "form-control",
+           placeholder = "Адрес электронной почты"
+       }
+   })
     </div>
-    <input type="submit" value="Зарегистрироваться" />
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.Password, htmlAttributes: new { @class = "control-label" })
+        @Html.EditorFor(model => model.Password, new
+   {
+       htmlAttributes = new
+       {
+           @class = "form-control",
+           placeholder = "Пароль"
+       }
+   })
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.PasswordConfirm, htmlAttributes: new { @class = "control-label" })
+        @Html.EditorFor(model => model.PasswordConfirm, new
+   {
+       htmlAttributes = new
+       {
+           @class = "form-control",
+           placeholder = "Подтверждение пароля"
+       }
+   })
+    </div>
+
+    <div>
+        <input type="submit" class="btn btn-primary" value="Зарегистрироваться" />
+    </div>
 }
 
 @section Scripts {

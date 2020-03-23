@@ -9,50 +9,46 @@
     <link href="@Url.Content("~/Content/Site.css")" rel="stylesheet" type="text/css" />
 </head>
 <body>
-    <div class="container">
-        <nav class="navbar navbar-top navbar-expand-lg navbar-dark navbar-user">
-            <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-                <ul class="navbar-nav">
-                    <li>@Html.ActionLink("Home", "Index", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    @if (User.IsInRole("client"))
-                    {
-                        <li>
-                            @Html.ActionLink("Личный кабинет", "BankAccountsData", "BankAccount",
-                           new { area = "" }, new { @class = "nav-link" })
-                        </li>
-                        <li>
-                            @Html.ActionLink("Безопасность", "Security", "Home",
-                       new { area = "" }, new { @class = "nav-link" })
-                        </li>
-                    }
-                    else if (User.IsInRole("administrator"))
-                    {
-                        <li>
-                            @Html.ActionLink("Данные о пользователях", "DataUsers", "Account",
-                       new { area = "" }, new { @class = "nav-link" })
-                        </li>
-                    }
-                </ul>
-                <ul class="navbar-nav">
-                    @if (!User.Identity.IsAuthenticated)
-                    {
-                        <li>
-                            @Html.ActionLink("Войти", "Login", "Account",
-                       new { area = "" }, new { @class = "nav-link" })
-                        </li>
-
-                    }
-                    else
-                    {
+    @if (User.Identity.IsAuthenticated)
+    {
+        <div class="container">
+            <nav class="navbar navbar-top navbar-expand-lg navbar-dark navbar-user">
+                <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                    <ul class="navbar-nav">
+                        <li>@Html.ActionLink("Home", "Index", "Home", new { area = "" }, new { @class = "nav-link" })</li>
+                        @if (User.IsInRole("client"))
+                        {
+                            <li>
+                                @Html.ActionLink("Личный кабинет", "BankAccountsData", "BankAccount",
+                    new { area = "" }, new { @class = "nav-link" })
+                            </li>
+                            <li>
+                                @Html.ActionLink("Подготовленные платежи", "PreparedPaymentsData", "Payment",
+                     new { area = "" }, new { @class = "nav-link" })
+                            </li>
+                            <li>
+                                @Html.ActionLink("Безопасность", "Security", "Home",
+                new { area = "" }, new { @class = "nav-link" })
+                            </li>
+                        }
+                        else if (User.IsInRole("administrator"))
+                        {
+                            <li>
+                                @Html.ActionLink("Данные о пользователях", "DataUsers", "Account",
+                new { area = "" }, new { @class = "nav-link" })
+                            </li>
+                        }
+                    </ul>
+                    <ul class="navbar-nav">
                         <li>
                             @Html.ActionLink("Выйти", "Logout", "Account",
-                       new { area = "" }, new { @class = "nav-link" })
+            new { area = "" }, new { @class = "nav-link" })
                         </li>
-                    }
-                </ul>
-            </div>
-        </nav>
-    </div>
+                    </ul>
+                </div>
+            </nav>
+        </div>
+    }
 
     <div class="container body-content">
         @RenderBody()

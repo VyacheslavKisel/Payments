@@ -5,11 +5,9 @@ using System.Web;
 
 namespace Payments.ViewModels.Payment
 {
-    // Модель представления вывода инфорамации
-    // об осуществленных платежах
-    public class PaymentBankAccount
+    public class PreparedPayment
     {
-        public PaymentBankAccount(int id, DateTime dateTime, string status, double sum,
+        public PreparedPayment(int id, DateTime dateTime, string status, double sum,
             string recipient, string codeEgrpou, string codeIban, string purpose)
         {
             Id = id;
@@ -21,7 +19,7 @@ namespace Payments.ViewModels.Payment
             CodeIban = codeIban;
             Purpose = purpose;
         }
-        //public PaymentBankAccount() { }
+        public PreparedPayment() { }
         public int Id { get; set; }
         public DateTime DateTime { get; set; }
         public string Status { get; set; }

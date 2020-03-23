@@ -7,7 +7,7 @@ using System.Web;
 namespace Payments.ViewModels.Payment
 {
     // Модель представления для
-    // добавления платежа
+    // подготовки платежа
     public class PreparationPaymentModel
     {
         [Required]

@@ -10,10 +10,12 @@ namespace Payments.ViewModels.Account
     public class LoginModel
     {
         [Required]
-        public string Email { set; get; }
+        [Display(Name = "Адрес электронной почты")]
+        public string Email { get; set; }
 
         [Required]
+        [Display(Name = "Пароль")]
         [DataType(DataType.Password)]
-        public string Password { set; get; }
+        public string Password { get; set; }
     }
 }

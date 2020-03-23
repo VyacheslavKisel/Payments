@@ -124,10 +124,10 @@ namespace Payments.Controllers
         public ActionResult Logout()
         {
             AuthenticationManager.SignOut();
-            return RedirectToAction("Login", "Account");
+            return RedirectToAction("Index", "Home");
         }
 
-        //Нет ViewModel
+        //Не передаем ViewModel
         [Authorize(Roles = "administrator")]
         public ActionResult DataUsers()
         {

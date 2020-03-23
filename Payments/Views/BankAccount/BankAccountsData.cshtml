@@ -8,25 +8,23 @@
 
 @Html.ActionLink("Создать счет", "CreateBankAccount", "BankAccount")
 
-<table class="table">
-    @foreach (var item in Model)
-    {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.NumberCard)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Balance)
-            </td>
-            <td>
-                @Html.RouteLink("Платежи", new { controller = "Payment", action = "PaymentData", id = item.Id })
-            </td>
-        </tr>
-    }
-</table>
+@foreach (var item in Model)
+{
+    <dl>
+        <dd>
+            @Html.DisplayFor(modelItem => item.Id)
+        </dd>
+        <dd>
+            @Html.DisplayFor(modelItem => item.NumberCard)
+        </dd>
+        <dd>
+            @Html.DisplayFor(modelItem => item.Name)
+        </dd>
+        <dd>
+            @Html.DisplayFor(modelItem => item.Balance)
+        </dd>
+        <dd>
+            @Html.RouteLink("Платежи", new { controller = "Payment", action = "PaymentData", id = item.Id })
+        </dd>
+    </dl>
+}

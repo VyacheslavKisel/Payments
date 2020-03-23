@@ -1,0 +1,44 @@
+﻿@model List<Payments.ViewModels.Payment.PreparedPayment>
+
+@{
+    ViewBag.Title = "PreparePaymentsData";
+}
+
+<h2>PreparePaymentsData</h2>
+
+@using (Html.BeginForm("Pay", "Payment", FormMethod.Post))
+{
+    <table class="table">
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            @Html.HiddenFor(m => m[i].Id)
+            <tr>
+                <td>
+                    @Html.DisplayFor(m => m[i].DateTime)
+                </td>
+                <td>
+                    @Html.DisplayFor(m => m[i].Status)
+                </td>
+                <td>
+                    @Html.DisplayFor(m => m[i].Sum)
+                </td>
+                <td>
+                    @Html.DisplayFor(m => m[i].Recipient)
+                </td>
+                <td>
+                    @Html.DisplayFor(m => m[i].CodeEgrpou)
+                </td>
+                <td>
+                    @Html.DisplayFor(m => m[i].CodeIban)
+                </td>
+                <td>
+                    @Html.DisplayFor(m => m[i].Purpose)
+                </td>
+                <td>
+                    @Html.RouteLink("Отклонить", new { controller = "Payment", action = "RejectPayment", id = Model[i].Id })
+                </td>
+            </tr>
+        }
+    </table>
+    <input type="submit" value="Подтвердить оплату" />
+}

@@ -11,16 +11,37 @@
 {
     @Html.AntiForgeryToken()
 
-    <div>
-        @Html.ValidationSummary()
-        <p>
-            <label>Email</label>
-            @Html.EditorFor(m => m.Email)
-        </p>
-        <p>
-            <label>Пароль</label>
-            @Html.EditorFor(m => m.Password)
-        </p>
-        <input type="submit" value="Войти" />
+    @Html.ValidationSummary(false, "", new { @class = "text-danger" })
+    <div class="form-group">
+        @Html.LabelFor(model => model.Email, htmlAttributes: new { @class = "control-label col-md-3" })
+        <div class="col-md-9">
+            @Html.EditorFor(model => model.Email, new
+       {
+           htmlAttributes = new
+           {
+               @class = "form-control",
+               placeholder = "Адрес электронной почты"
+           }
+       })
+        </div>
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(model => model.Password, htmlAttributes: new { @class = "control-label col-md-3" })
+        <div class="col-md-9">
+            @Html.EditorFor(model => model.Password, new
+            {
+                htmlAttributes = new
+                {
+                    @class = "form-control",
+           placeholder = "Пароль"
+                }
+            })
+            @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
+        </div>
+    </div>
+
+    <div class="col-md-offset-2 col-md-10">
+        <input type="submit" class="btn btn-primary" value="Войти" />
     </div>
 }

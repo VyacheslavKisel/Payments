@@ -168,6 +168,7 @@
     <Compile Include="ViewModels\BankAccount\BankAccountUserDataForAdmin.cs" />
     <Compile Include="ViewModels\BankAccount\CreatureBankAccountModel.cs" />
     <Compile Include="ViewModels\Payment\PaymentBankAccount.cs" />
+    <Compile Include="ViewModels\Payment\PreparedPayment.cs" />
     <Compile Include="ViewModels\Payment\PreparaionPaymentModel.cs" />
     <Compile Include="ViewModels\Account\LoginModel.cs" />
     <Compile Include="ViewModels\Account\RegisterModel.cs" />
@@ -330,6 +331,7 @@
     <Content Include="Scripts\popper.js.map" />
     <Content Include="Scripts\popper-utils.min.js.map" />
     <Content Include="Scripts\popper-utils.js.map" />
+    <Content Include="Views\Payment\PreparedPaymentsData.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

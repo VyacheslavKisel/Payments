@@ -2,6 +2,14 @@
     ViewBag.Title = "Home Page";
 }
 
+
+<div>
+    @if (!User.Identity.IsAuthenticated)
+    {
+        @Html.ActionLink("Войти", "Login", "Account",
+                              new { area = "" }, new { @class = "nav-link" })
+    }
+</div>
 <p>
     С помощью данного приложения Вы можете управлять счетами и осуществлять платежи.
 </p>
