@@ -4,6 +4,7 @@ using Payments.ViewModels.BankAccount;
 using Payments.ViewModels.Payment;
 using Service;
 using Service.Models;
+using Service.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -26,20 +27,22 @@ namespace Payments.Controllers
             }
         }
 
-        ApplicationContext _db = new ApplicationContext();
+        //ApplicationContext _db = new ApplicationContext();
+        private UnitOfWork database;
 
-        public ActionResult Index()
+        public PaymentController()
         {
-            return View();
+            database = new UnitOfWork();
         }
 
         // Осуществленные платежи
-        public ActionResult PaymentData(int id)
+        public async Task<ActionResult> PaymentData(int id)
         {
             ViewBag.BankAccountId = id;
-            List<Payment> payments = _db.Payments.ToList();
+            IEnumerable<Payment> payments = await database.Payments
+                .FindAllAsync(payment => payment.BankAccountId == id && 
+                (payment.Status == "отправленный" || payment.Status == "отклоненный"));
             var paymentsCurrentBankAccount = payments
-                .Where(payment => payment.BankAccountId == id && (payment.Status == "отправленный" || payment.Status == "отклоненный"))
                 .Select(payment => new PaymentBankAccount(payment.Id, payment.DateTime, payment.Status,
                 payment.Sum, payment.Recipient, payment.CodeEgrpou, payment.CodeIban, payment.Purpose))
                 .ToList();
@@ -51,15 +54,13 @@ namespace Payments.Controllers
         {
             string nameCurrentUser = User.Identity.Name;
             ApplicationUser currentUser = await UserManager.FindByNameAsync(nameCurrentUser);
-            // дублирование кода из BankAccountController - BankAccountsData
-            List<BankAccount> bankAccountsAll = _db.BankAccounts.ToList();
+            IEnumerable<BankAccount> bankAccountsAll = await database.BankAccounts
+                .FindAllAsync(bankAccount => bankAccount.ApplicationUserId == currentUser.Id && bankAccount.LockoutEnabled == false);
             var bankAccountsUser = bankAccountsAll
-                .Where(bankAccount => bankAccount.ApplicationUserId == currentUser.Id && bankAccount.LockoutEnabled == false)
                 .Select(bankAccount => new BankAccountUser(bankAccount.Id, bankAccount.NumberAccount, bankAccount.NumberCard,
                 bankAccount.Name, bankAccount.Balance))
                 .ToList();
-            // слишком много кода, надо сделать проще запрос
-            List<Payment> payments = _db.Payments.ToList();
+            IEnumerable<Payment> payments = await database.Payments.GetAllAsync();
             List<PreparedPayment> preparedPaymentsBankAccount = new List<PreparedPayment>();
             foreach (var item in payments)
             {
@@ -86,7 +87,7 @@ namespace Payments.Controllers
         }
 
         [HttpPost]
-        public ActionResult PreparePayment(PreparationPaymentModel model)
+        public async Task<ActionResult> PreparePayment(PreparationPaymentModel model)
         {
             if(ModelState.IsValid)
             {
@@ -101,8 +102,8 @@ namespace Payments.Controllers
                     DateTime = DateTime.Now,
                     Status = "подготовленный"
                 };
-                _db.Payments.Add(payment);
-                _db.SaveChanges();
+                database.Payments.Create(payment);
+                await database.SaveAsync();
                 return RedirectToAction("PreparedPaymentsData", "Payment");
             }
             return View(model);
@@ -110,33 +111,33 @@ namespace Payments.Controllers
 
         // Подтвердить платеж
         [HttpPost]
-        public ActionResult Pay(List<PreparedPayment> model)
+        public async Task<ActionResult> Pay(List<PreparedPayment> model)
         {
             foreach (var item in model)
             {
-                Payment payment = _db.Payments.Find(item.Id);
-                BankAccount bankAccount = _db.BankAccounts.FirstOrDefault(p => p.Id == payment.BankAccountId);
+                Payment payment = await database.Payments.GetAsync(item.Id);
+                BankAccount bankAccount = await database.BankAccounts.FindAsync(p => p.Id == payment.BankAccountId);
                 if(bankAccount.Balance >= payment.Sum)
                 {
                     payment.Status = "отправленный";
                     payment.DateTime = DateTime.Now;
                     bankAccount.Balance -= payment.Sum;
-                    _db.Entry(payment).State = EntityState.Modified;
-                    _db.Entry(bankAccount).State = EntityState.Modified;
-                    _db.SaveChanges();
+                    database.Payments.Update(payment);
+                    database.BankAccounts.Update(bankAccount);
+                    await database.SaveAsync();
                 }
             }
             return RedirectToAction("PreparedPaymentsData", "Payment");
         }
 
         // Отклонить платеж
-        public ActionResult RejectPayment(int id)
+        public async Task<ActionResult> RejectPayment(int id)
         {
-            Payment payment = _db.Payments.Find(id);
+            Payment payment = await database.Payments.GetAsync(id);
             payment.Status = "отклоненный";
             payment.DateTime = DateTime.Now;
-            _db.Entry(payment).State = EntityState.Modified;
-            _db.SaveChanges();
+            database.Payments.Update(payment);
+            await database.SaveAsync();
             return RedirectToAction("PreparedPaymentsData", "Payment");
         }
     }

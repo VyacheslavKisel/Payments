@@ -46,20 +46,19 @@ namespace Payments.Controllers
             return View();
         }
 
-        // исправить на асинхронный метод
         [HttpPost]
-        public ActionResult Register(RegisterModel model)
+        public async Task<ActionResult> Register(RegisterModel model)
         {
             if (ModelState.IsValid)
             {
                 string userRole = "client";
-                ApplicationRole role = RoleManager.FindByName(userRole);
+                ApplicationRole role = await RoleManager.FindByNameAsync(userRole);
                 ApplicationUser user = new ApplicationUser { UserName = model.Email, Email = model.Email };
-                Microsoft.AspNet.Identity.IdentityResult result = UserManager.Create(user, model.Password);
+                Microsoft.AspNet.Identity.IdentityResult result = await UserManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
-                    UserManager.AddToRole(user.Id, role.Name);
-                    ClaimsIdentity claim = UserManager.CreateIdentity(user,
+                    await UserManager.AddToRoleAsync(user.Id, role.Name);
+                    ClaimsIdentity claim = await UserManager.CreateIdentityAsync(user,
                         DefaultAuthenticationTypes.ApplicationCookie);
                     AuthenticationManager.SignOut();
                     AuthenticationManager.SignIn(new AuthenticationProperties
@@ -127,22 +126,21 @@ namespace Payments.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        //Не передаем ViewModel
         [Authorize(Roles = "administrator")]
         public ActionResult DataUsers()
         {
             return View(UserManager.Users);
         }
 
-        //Блокировка пользователя
+        // Блокировка пользователя
         [Authorize(Roles = "administrator")]
-        public ActionResult BlockUserAccount(string id)
+        public async Task<ActionResult> BlockUserAccount(string id)
         {
             if (id == null)
             {
                 return HttpNotFound();
             }
-            ApplicationUser applicationUser = UserManager.FindById(id);
+            ApplicationUser applicationUser = await UserManager.FindByIdAsync(id);
             if (applicationUser == null)
             {
                 return HttpNotFound();
@@ -166,16 +164,15 @@ namespace Payments.Controllers
 
         [HttpPost]
         [Authorize(Roles = "administrator")]
-        public ActionResult BlockUserAccount(UserBlockData userBlockData)
+        public async Task<ActionResult> BlockUserAccount(UserBlockData userBlockData)
         {
             if (ModelState.IsValid)
             {
-                var result = UserManager.SetLockoutEnabled(userBlockData.UserId, true);
+                var result = await UserManager.SetLockoutEnabledAsync(userBlockData.UserId, true);
                 if (result.Succeeded)
                 {
-                    result = UserManager.SetLockoutEndDate(userBlockData.UserId, (DateTimeOffset)userBlockData.DateTimeBlock);
-                    ApplicationUser applicationUser = UserManager.FindById(userBlockData.UserId);
-                    //logger.Info($"Был заблокирован пользователь, у которого логин {applicationUser.UserName} и почта {applicationUser.Email}");
+                    result = await UserManager.SetLockoutEndDateAsync(userBlockData.UserId, (DateTimeOffset)userBlockData.DateTimeBlock);
+                    ApplicationUser applicationUser = await UserManager.FindByIdAsync(userBlockData.UserId);
                 }
                 return RedirectToAction("DataUsers");
             }
@@ -184,13 +181,13 @@ namespace Payments.Controllers
 
         // Разблокировка пользователей
         [Authorize(Roles = "administrator")]
-        public ActionResult UnBlockUserAccount(string id)
+        public async Task<ActionResult> UnBlockUserAccount(string id)
         {
             if (id == null)
             {
                 return HttpNotFound();
             }
-            ApplicationUser applicationUser = UserManager.FindById(id);
+            ApplicationUser applicationUser = await UserManager.FindByIdAsync(id);
             if (applicationUser == null)
             {
                 return HttpNotFound();
@@ -215,15 +212,14 @@ namespace Payments.Controllers
 
         [HttpPost]
         [Authorize(Roles = "administrator")]
-        public ActionResult UnBlockUserAccount(UserBlockData userBlockData)
+        public async Task<ActionResult> UnBlockUserAccount(UserBlockData userBlockData)
         {
-            var result = UserManager.SetLockoutEnabled(userBlockData.UserId, true);
+            var result = await UserManager.SetLockoutEnabledAsync(userBlockData.UserId, true);
             if (result.Succeeded)
             {
-                result = UserManager.SetLockoutEndDate(userBlockData.UserId, DateTimeOffset.UtcNow);
-                result = UserManager.SetLockoutEnabled(userBlockData.UserId, false);
+                result = await UserManager.SetLockoutEndDateAsync(userBlockData.UserId, DateTimeOffset.UtcNow);
+                result = await UserManager.SetLockoutEnabledAsync(userBlockData.UserId, false);
                 ApplicationUser applicationUser = UserManager.FindById(userBlockData.UserId);
-                //logger.Info($"Был разблокирован пользователь, у которого логин {applicationUser.UserName} и почта {applicationUser.Email}");
             }
             return RedirectToAction("DataUsers");
         }

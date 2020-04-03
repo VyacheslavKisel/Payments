@@ -1,5 +1,4 @@
-﻿@*НЕ ViewModel*@
-@model IEnumerable<Service.Models.BankAccount>
+﻿@model IEnumerable<Payments.ViewModels.BankAccount.BankAccountSecurityModel>
 
 @{
     ViewBag.Title = "Безопасность";
@@ -14,7 +13,7 @@
             @if (item.LockoutEnabled)
             {
                 <td>
-                    @Html.DisplayFor(modelItem => item.Id)
+                    @Html.DisplayFor(modelItem => item.NumberAccount)
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.NumberCard)
@@ -22,17 +21,11 @@
                 <td>
                     Счет заблокирован
                 </td>
-                @*<td>
-                    @Html.RouteLink("Подать заявку на разблокирование счета", new { controller = "BankAccount", action = "UnBlockBankAccount", id = item.Id })
-                </td>*@
-                <td>
-                    Подать заявку на разблокирование счета
-                </td>
             }
             else
             {
                 <td>
-                    @Html.DisplayFor(modelItem => item.Id)
+                    @Html.DisplayFor(modelItem => item.NumberAccount)
                 </td>
                 <td>
                     @Html.DisplayFor(modelItem => item.NumberCard)

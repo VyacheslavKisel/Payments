@@ -163,6 +163,7 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Service\ServiceBankAccount.cs" />
+    <Compile Include="ViewModels\BankAccount\BankAccountSecurityModel.cs" />
     <Compile Include="ViewModels\BankAccount\BankAccountUser.cs" />
     <Compile Include="ViewModels\BankAccount\BankAccountUserDataForAdmin.cs" />
     <Compile Include="ViewModels\BankAccount\CreatureBankAccountModel.cs" />

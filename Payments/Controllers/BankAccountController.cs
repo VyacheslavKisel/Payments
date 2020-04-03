@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using Service.Repositories;
 
 namespace Payments.Controllers
 {
@@ -24,16 +25,21 @@ namespace Payments.Controllers
             }
         }
 
-        ApplicationContext _db = new ApplicationContext();
+        private UnitOfWork database;
+
+        public BankAccountController()
+        {
+            database = new UnitOfWork();
+        }
 
         [Authorize(Roles = "client")]
         public async Task<ActionResult> BankAccountsData()
         {
             string nameCurrentUser = User.Identity.Name;
             ApplicationUser currentUser = await UserManager.FindByNameAsync(nameCurrentUser);
-            List<BankAccount> bankAccountsAll = _db.BankAccounts.ToList();
+            IEnumerable<BankAccount> bankAccountsAll = await database.BankAccounts.
+                FindAllAsync(bankAccount => bankAccount.ApplicationUserId == currentUser.Id && bankAccount.LockoutEnabled == false);
             var bankAccountsUser = bankAccountsAll
-                .Where(bankAccount => bankAccount.ApplicationUserId == currentUser.Id && bankAccount.LockoutEnabled == false)
                 .Select(bankAccount => new BankAccountUser(bankAccount.Id, bankAccount.NumberAccount, bankAccount.NumberCard, 
                 bankAccount.Name, bankAccount.Balance))
                 .ToList();
@@ -41,11 +47,11 @@ namespace Payments.Controllers
         }
 
         [Authorize(Roles = "administrator")]
-        public ActionResult BankAccountsDataForAdmin(string id)
+        public async Task<ActionResult> BankAccountsDataForAdmin(string id)
         {
-            List<BankAccount> bankAccountsAll = _db.BankAccounts.ToList();
+            IEnumerable<BankAccount> bankAccountsAll = await database.BankAccounts
+                .FindAllAsync(bankAccount => bankAccount.ApplicationUserId == id);
             var bankAccountsUser = bankAccountsAll
-                .Where(bankAccount => bankAccount.ApplicationUserId == id)
                 .Select(bankAccount => new BankAccountUserDataForAdmin(bankAccount.Id, bankAccount.NumberAccount,
                 bankAccount.NumberCard, bankAccount.Name, bankAccount.Balance, bankAccount.LockoutEnabled))
                 .ToList();
@@ -64,7 +70,7 @@ namespace Payments.Controllers
 
         [Authorize(Roles = "client")]
         [HttpPost]
-        public ActionResult CreateBankAccount(CreatureBankAccountModel model)
+        public async Task<ActionResult> CreateBankAccount(CreatureBankAccountModel model)
         {
             if(ModelState.IsValid)
             {
@@ -74,7 +80,8 @@ namespace Payments.Controllers
                 {
                     existingNumberBankAccount = null;
                     formedNumberBankAccount = ServiceBankAccount.FormNumberAccount();
-                    existingNumberBankAccount = _db.BankAccounts.FirstOrDefault(p => p.NumberAccount == formedNumberBankAccount);
+                    existingNumberBankAccount = await database.BankAccounts
+                        .FindAsync(p => p.NumberAccount == formedNumberBankAccount);
                 }
                 while (existingNumberBankAccount != null);
                 BankAccount bankAccount = new BankAccount()
@@ -86,40 +93,40 @@ namespace Payments.Controllers
                     LockoutEnabled = false,
                     NumberAccount = formedNumberBankAccount
                 };
-                _db.BankAccounts.Add(bankAccount);
-                _db.SaveChanges();
+                database.BankAccounts.Create(bankAccount);
+                await database.SaveAsync();
                 return RedirectToAction("BankAccountsData", "BankAccount");
             }
             return View();
         }
 
         [Authorize(Roles = "administrator")]
-        public ActionResult BlockBankAccount(int id)
+        public async Task<ActionResult> BlockBankAccount(int id)
         {
-            BankAccount bankAccount = _db.BankAccounts.Find(id);
+            BankAccount bankAccount = await database.BankAccounts.GetAsync(id);
             bankAccount.LockoutEnabled = true;
-            _db.Entry(bankAccount).State = EntityState.Modified;
-            _db.SaveChanges();
+            database.BankAccounts.Update(bankAccount);
+            await database.SaveAsync();
             return RedirectToAction("DataUsers", "Account");
         }
 
         [Authorize(Roles = "administrator")]
-        public ActionResult UnBlockBankAccount(int id)
+        public async Task<ActionResult> UnBlockBankAccount(int id)
         {
-            BankAccount bankAccount = _db.BankAccounts.Find(id);
+            BankAccount bankAccount = await database.BankAccounts.GetAsync(id);
             bankAccount.LockoutEnabled = false;
-            _db.Entry(bankAccount).State = EntityState.Modified;
-            _db.SaveChanges();
+            database.BankAccounts.Update(bankAccount);
+            await database.SaveAsync();
             return RedirectToAction("DataUsers", "Account");
         }
 
         [Authorize(Roles = "client")]
-        public ActionResult BlockSelfBankAccount(int id)
+        public async Task<ActionResult> BlockSelfBankAccount(int id)
         {
-            BankAccount bankAccount = _db.BankAccounts.Find(id);
+            BankAccount bankAccount = await database.BankAccounts.GetAsync(id);
             bankAccount.LockoutEnabled = true;
-            _db.Entry(bankAccount).State = EntityState.Modified;
-            _db.SaveChanges();
+            database.BankAccounts.Update(bankAccount);
+            await database.SaveAsync();
             return RedirectToAction("Security", "Home");
         }
     }
