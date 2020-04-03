@@ -12,6 +12,6 @@ namespace Service.Models
     {
         public ApplicationUser() { }
 
-        public virtual ICollection<BankAccount> BankAccounts { get; set; }
+        public ICollection<BankAccount> BankAccounts { get; set; }
     }
 }

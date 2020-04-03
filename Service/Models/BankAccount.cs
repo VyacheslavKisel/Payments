@@ -11,6 +11,7 @@ namespace Service.Models
     public class BankAccount
     {
         public int Id { get; set; }
+        public string NumberAccount { get; set; }
         public string NumberCard { get; set; }
         public string Name { get; set; }
         public double Balance { get; set; }
@@ -18,8 +19,8 @@ namespace Service.Models
 
         [MaxLength(128)]
         public string ApplicationUserId { get; set; }
-        public virtual ApplicationUser ApplicationUser { get; set; }
+        public ApplicationUser ApplicationUser { get; set; }
 
-        public virtual ICollection<Payment> Payments { get; set; }
+        public ICollection<Payment> Payments { get; set; }
     }
 }

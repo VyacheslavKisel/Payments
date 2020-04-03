@@ -19,6 +19,6 @@ namespace Service.Models
         public string Purpose { get; set; }
 
         public int BankAccountId { get; set; }
-        public virtual BankAccount BankAccount { get; set; }
+        public BankAccount BankAccount { get; set; }
     }
 }

@@ -15,7 +15,6 @@ namespace Payments.Controllers
             return View();
         }
 
-        // доработать, передается не ViewModel
         [Authorize(Roles = "client")]
         public ActionResult Security()
         {

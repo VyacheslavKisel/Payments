@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNet.Identity.Owin;
 using Payments.ViewModels;
 using Payments.ViewModels.BankAccount;
+using Payments.Service;
 using Service;
 using Service.Models;
 using System;
@@ -33,7 +34,7 @@ namespace Payments.Controllers
             List<BankAccount> bankAccountsAll = _db.BankAccounts.ToList();
             var bankAccountsUser = bankAccountsAll
                 .Where(bankAccount => bankAccount.ApplicationUserId == currentUser.Id && bankAccount.LockoutEnabled == false)
-                .Select(bankAccount => new BankAccountUser(bankAccount.Id, bankAccount.NumberCard, 
+                .Select(bankAccount => new BankAccountUser(bankAccount.Id, bankAccount.NumberAccount, bankAccount.NumberCard, 
                 bankAccount.Name, bankAccount.Balance))
                 .ToList();
             return View(bankAccountsUser);
@@ -45,13 +46,12 @@ namespace Payments.Controllers
             List<BankAccount> bankAccountsAll = _db.BankAccounts.ToList();
             var bankAccountsUser = bankAccountsAll
                 .Where(bankAccount => bankAccount.ApplicationUserId == id)
-                .Select(bankAccount => new BankAccountUserDataForAdmin(bankAccount.Id, bankAccount.NumberCard,
-                bankAccount.Name, bankAccount.Balance, bankAccount.LockoutEnabled))
+                .Select(bankAccount => new BankAccountUserDataForAdmin(bankAccount.Id, bankAccount.NumberAccount,
+                bankAccount.NumberCard, bankAccount.Name, bankAccount.Balance, bankAccount.LockoutEnabled))
                 .ToList();
             return View(bankAccountsUser);
         }
 
-        //ViewBag
         [Authorize(Roles = "client")]
         [HttpGet]
         public async Task<ActionResult> CreateBankAccount()
@@ -68,13 +68,23 @@ namespace Payments.Controllers
         {
             if(ModelState.IsValid)
             {
+                BankAccount existingNumberBankAccount;
+                string formedNumberBankAccount;
+                do
+                {
+                    existingNumberBankAccount = null;
+                    formedNumberBankAccount = ServiceBankAccount.FormNumberAccount();
+                    existingNumberBankAccount = _db.BankAccounts.FirstOrDefault(p => p.NumberAccount == formedNumberBankAccount);
+                }
+                while (existingNumberBankAccount != null);
                 BankAccount bankAccount = new BankAccount()
                 {
                     NumberCard = model.NumberCard,
                     Name = model.Name,
                     Balance = 20000,
                     ApplicationUserId = model.ApplicationUserId,
-                    LockoutEnabled = false
+                    LockoutEnabled = false,
+                    NumberAccount = formedNumberBankAccount
                 };
                 _db.BankAccounts.Add(bankAccount);
                 _db.SaveChanges();
@@ -83,8 +93,6 @@ namespace Payments.Controllers
             return View();
         }
 
-        // Лучше, чтобы оставалось в списке счетов
-        // а не переходило в список пользователей
         [Authorize(Roles = "administrator")]
         public ActionResult BlockBankAccount(int id)
         {
@@ -95,8 +103,6 @@ namespace Payments.Controllers
             return RedirectToAction("DataUsers", "Account");
         }
 
-        // Лучше, чтобы оставалось в списке счетов
-        // а не переходило в список пользователей
         [Authorize(Roles = "administrator")]
         public ActionResult UnBlockBankAccount(int id)
         {
@@ -107,7 +113,6 @@ namespace Payments.Controllers
             return RedirectToAction("DataUsers", "Account");
         }
 
-        // Этот метод и метод выше имеют один и тот же код
         [Authorize(Roles = "client")]
         public ActionResult BlockSelfBankAccount(int id)
         {

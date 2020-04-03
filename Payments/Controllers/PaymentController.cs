@@ -55,7 +55,7 @@ namespace Payments.Controllers
             List<BankAccount> bankAccountsAll = _db.BankAccounts.ToList();
             var bankAccountsUser = bankAccountsAll
                 .Where(bankAccount => bankAccount.ApplicationUserId == currentUser.Id && bankAccount.LockoutEnabled == false)
-                .Select(bankAccount => new BankAccountUser(bankAccount.Id, bankAccount.NumberCard,
+                .Select(bankAccount => new BankAccountUser(bankAccount.Id, bankAccount.NumberAccount, bankAccount.NumberCard,
                 bankAccount.Name, bankAccount.Balance))
                 .ToList();
             // слишком много кода, надо сделать проще запрос

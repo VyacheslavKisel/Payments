@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Payments", "Payments\Payments.csproj", "{2292A98B-EDA8-4157-A1A6-4FCFFB6778BE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Service", "Service\Service.csproj", "{BB2045F3-DC04-4FD9-84D7-441772B6C74F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Payments.DAL", "Service\Payments.DAL.csproj", "{BB2045F3-DC04-4FD9-84D7-441772B6C74F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
