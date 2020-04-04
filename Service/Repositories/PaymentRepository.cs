@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace Service.Repositories
 {
+    // Репозиторий платежей
     public class PaymentRepository : IRepository<Payment>
     {
         private ApplicationContext applicationContext;

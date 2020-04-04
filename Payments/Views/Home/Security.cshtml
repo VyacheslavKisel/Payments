@@ -7,6 +7,22 @@
 <h2>Счета</h2>
 
 <table class="table">
+    <tr>
+        <th>
+            Номер счета
+        </th>
+        <th>
+            Номер карты
+        </th>
+        <th>
+            Наименование счета
+        </th>
+        <th>
+            Остаток средств
+        </th>
+        <th></th>
+    </tr>
+
     @foreach (var item in Model)
     {
         <tr>
@@ -18,6 +34,8 @@
                 <td>
                     @Html.DisplayFor(modelItem => item.NumberCard)
                 </td>
+                <td></td>
+                <td></td>
                 <td>
                     Счет заблокирован
                 </td>

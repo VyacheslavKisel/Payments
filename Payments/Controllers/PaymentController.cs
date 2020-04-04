@@ -36,7 +36,7 @@ namespace Payments.Controllers
         }
 
         // Осуществленные платежи
-        public async Task<ActionResult> PaymentData(int id)
+        public async Task<ActionResult> PaymentData(int id, string sortOrder)
         {
             ViewBag.BankAccountId = id;
             IEnumerable<Payment> payments = await database.Payments
@@ -46,6 +46,25 @@ namespace Payments.Controllers
                 .Select(payment => new PaymentBankAccount(payment.Id, payment.DateTime, payment.Status,
                 payment.Sum, payment.Recipient, payment.CodeEgrpou, payment.CodeIban, payment.Purpose))
                 .ToList();
+            switch (sortOrder)
+            {
+                case "Number":
+                    paymentsCurrentBankAccount = paymentsCurrentBankAccount
+                        .OrderBy(payment => payment.Id).ToList();
+                    break;
+                case "Number_desc":
+                    paymentsCurrentBankAccount = paymentsCurrentBankAccount
+                        .OrderByDescending(payment => payment.Id).ToList();
+                    break;
+                case "Date":
+                    paymentsCurrentBankAccount = paymentsCurrentBankAccount
+                        .OrderBy(payment => payment.DateTime).ToList();
+                    break;
+                case "Date_desc":
+                    paymentsCurrentBankAccount = paymentsCurrentBankAccount
+                        .OrderByDescending(payment => payment.DateTime).ToList();
+                    break;
+            }
             return View(paymentsCurrentBankAccount);
         }
 

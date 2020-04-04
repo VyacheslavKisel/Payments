@@ -13,35 +13,30 @@
 
     @Html.ValidationSummary(false, "", new { @class = "text-danger" })
     <div class="form-group">
-        @Html.LabelFor(model => model.Email, htmlAttributes: new { @class = "control-label col-md-3" })
-        <div class="col-md-9">
-            @Html.EditorFor(model => model.Email, new
+        @Html.LabelFor(model => model.Email, htmlAttributes: new { @class = "control-label" })
+        @Html.EditorFor(model => model.Email, new
+   {
+       htmlAttributes = new
        {
-           htmlAttributes = new
-           {
-               @class = "form-control",
-               placeholder = "Адрес электронной почты"
-           }
-       })
-        </div>
+           @class = "form-control",
+           placeholder = "Адрес электронной почты"
+       }
+   })
     </div>
 
     <div class="form-group">
-        @Html.LabelFor(model => model.Password, htmlAttributes: new { @class = "control-label col-md-3" })
-        <div class="col-md-9">
-            @Html.EditorFor(model => model.Password, new
+        @Html.LabelFor(model => model.Password, htmlAttributes: new { @class = "control-label" })
+        @Html.EditorFor(model => model.Password, new
+        {
+            htmlAttributes = new
             {
-                htmlAttributes = new
-                {
-                    @class = "form-control",
-           placeholder = "Пароль"
-                }
-            })
-            @Html.ValidationMessageFor(model => model.Password, "", new { @class = "text-danger" })
-        </div>
+                @class = "form-control",
+       placeholder = "Пароль"
+            }
+        })
     </div>
 
-    <div class="col-md-offset-2 col-md-10">
+    <div>
         <input type="submit" class="btn btn-primary" value="Войти" />
     </div>
 }

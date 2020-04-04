@@ -32,8 +32,9 @@ namespace Payments.Controllers
             database = new UnitOfWork();
         }
 
+        // Незаблокированные банковские счета конкретного пользователя
         [Authorize(Roles = "client")]
-        public async Task<ActionResult> BankAccountsData()
+        public async Task<ActionResult> BankAccountsData(string sortOrder)
         {
             string nameCurrentUser = User.Identity.Name;
             ApplicationUser currentUser = await UserManager.FindByNameAsync(nameCurrentUser);
@@ -43,9 +44,32 @@ namespace Payments.Controllers
                 .Select(bankAccount => new BankAccountUser(bankAccount.Id, bankAccount.NumberAccount, bankAccount.NumberCard, 
                 bankAccount.Name, bankAccount.Balance))
                 .ToList();
+            switch(sortOrder)
+            {
+                case "Number":
+                    bankAccountsUser = bankAccountsUser.OrderBy(bankAccountUser => bankAccountUser.NumberAccount).ToList();
+                    break;
+                case "Number_desc":
+                    bankAccountsUser = bankAccountsUser.OrderByDescending(bankAccountUser => bankAccountUser.NumberAccount).ToList();
+                    break;
+                case "Name":
+                    bankAccountsUser = bankAccountsUser.OrderBy(bankAccountUser => bankAccountUser.Name).ToList();
+                    break;
+                case "Name_desc":
+                    bankAccountsUser = bankAccountsUser.OrderByDescending(bankAccountUser => bankAccountUser.Name).ToList();
+                    break;
+                case "Balance":
+                    bankAccountsUser = bankAccountsUser.OrderBy(bankAccountUser => bankAccountUser.Balance).ToList();
+                    break;
+                case "Balance_desc":
+                    bankAccountsUser = bankAccountsUser.OrderByDescending(bankAccountUser => bankAccountUser.Balance).ToList();
+                    break;
+            }
             return View(bankAccountsUser);
         }
 
+        // Банковские счета конкретного пользователя
+        // доступны для просмотра и дальнейшей блокировки админиситратором
         [Authorize(Roles = "administrator")]
         public async Task<ActionResult> BankAccountsDataForAdmin(string id)
         {
@@ -58,6 +82,7 @@ namespace Payments.Controllers
             return View(bankAccountsUser);
         }
 
+        // Создать банковский счет
         [Authorize(Roles = "client")]
         [HttpGet]
         public async Task<ActionResult> CreateBankAccount()
@@ -100,6 +125,8 @@ namespace Payments.Controllers
             return View();
         }
 
+        // Возможность администратора заблокировать
+        // банковский счет клиента
         [Authorize(Roles = "administrator")]
         public async Task<ActionResult> BlockBankAccount(int id)
         {
@@ -110,6 +137,8 @@ namespace Payments.Controllers
             return RedirectToAction("DataUsers", "Account");
         }
 
+        // Возможность администратора разблокировать
+        // банковский счет клиента
         [Authorize(Roles = "administrator")]
         public async Task<ActionResult> UnBlockBankAccount(int id)
         {
@@ -120,6 +149,8 @@ namespace Payments.Controllers
             return RedirectToAction("DataUsers", "Account");
         }
 
+        // Возможность клиента заблокировать
+        // свой собственный счет
         [Authorize(Roles = "client")]
         public async Task<ActionResult> BlockSelfBankAccount(int id)
         {

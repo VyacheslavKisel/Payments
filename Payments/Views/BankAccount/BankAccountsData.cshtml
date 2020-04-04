@@ -6,21 +6,52 @@
 
 <h2>Счета</h2>
 
-@Html.ActionLink("Создать счет", "CreateBankAccount", "BankAccount")
+<p>
+    @Html.ActionLink("Создать счет", "CreateBankAccount", "BankAccount")
+</p>
+<div>
+    @Html.ActionLink("Отсортировать по номеру в порядке возрастания",
+    "BankAccountsData", new { sortOrder = "Number" })
+</div>
+<div>
+    @Html.ActionLink("Отсортировать по номеру в порядке убывания",
+    "BankAccountsData", new { sortOrder = "Number_desc" })
+</div>
+<div>
+    @Html.ActionLink("Отсортировать по наименованию счета в порядке возрастания",
+    "BankAccountsData", new { sortOrder = "Name" })
+</div>
+<div>
+    @Html.ActionLink("Отсортировать по наименованию счета в порядке убывания",
+    "BankAccountsData", new { sortOrder = "Name_desc" })
+</div>
+<div>
+    @Html.ActionLink("Отсортировать по остатку " +
+    "в порядке возрастания", "BankAccountsData", new { sortOrder = "Balance" })
+</div>
+<div>
+    @Html.ActionLink("Отсортировать по остатку в порядке убывания",
+        "BankAccountsData", new { sortOrder = "Balance_desc" })
+</div>
+<br />
 
 @foreach (var item in Model)
 {
     <dl>
         <dd>
+            <i>Номер счета:</i>
             @Html.DisplayFor(modelItem => item.NumberAccount)
         </dd>
         <dd>
+            <i>Номер карты:</i>
             @Html.DisplayFor(modelItem => item.NumberCard)
         </dd>
         <dd>
+            <i>Наименование счета:</i>
             @Html.DisplayFor(modelItem => item.Name)
         </dd>
         <dd>
+            <i>Остаток средств:</i>
             @Html.DisplayFor(modelItem => item.Balance)
         </dd>
         <dd>

@@ -4,11 +4,29 @@
     ViewBag.Title = "PaymentData";
 }
 
-<h2>PaymentData</h2>
-
+<h2>Платежи</h2>
 <p>
     @Html.RouteLink("Добавить платеж", new { controller = "Payment", action = "PreparePayment", id = ViewBag.BankAccountId })
 </p>
+
+<div>
+    @Html.ActionLink("Отсортировать по номеру в порядке возрастания",
+    "PaymentData", new { sortOrder = "Number" })
+</div>
+<div>
+    @Html.ActionLink("Отсортировать по номеру в порядке убывания",
+    "PaymentData", new { sortOrder = "Number_desc" })
+</div>
+<div>
+    @Html.ActionLink("Отсортировать по дате в порядке возрастания (от старой к новой)",
+    "PaymentData", new { sortOrder = "Date" })
+</div>
+<div>
+    @Html.ActionLink("Отсортировать по дате в порядке убывания (от новой к старой)",
+    "PaymentData", new { sortOrder = "Date_desc" })
+</div>
+
+
 <table class="table">
     <tr>
         <th>

@@ -4,46 +4,40 @@
     ViewBag.Title = "BankAccountsDataForAdmin";
 }
 
-<h2>BankAccountsDataForAdmin</h2>
+<h2>Банковские счета пользователя</h2>
 
 <table class="table">
     @foreach (var item in Model)
     {
-    <tr>
-        <td>
-            @Html.DisplayFor(modelItem => item.NumberAccount)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.NumberCard)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Name)
-        </td>
-        <td>
-            @Html.DisplayFor(modelItem => item.Balance)
-        </td>
-        @*Сделать настоящие ссылки*@
-        @if (item.LockoutEnabled)
-        {
+        <tr>
             <td>
-                Счет заблокирован
+                @Html.DisplayFor(modelItem => item.NumberAccount)
             </td>
-            @*<td>
-                @Html.ActionLink("Разблокировать счет", "UnBlockBankAccount", "BankAccount", new { id = item.Id })
-            </td>*@
             <td>
-                @Html.RouteLink("Разблокировать счет", new { controller = "BankAccount", action = "UnBlockBankAccount", id = item.Id })
+                @Html.DisplayFor(modelItem => item.NumberCard)
             </td>
-        }
-        else
-        {
-            @*<td>
-                @Html.ActionLink("Заблокировать счет", "BlockBankAccount", "BankAccount", new { id = item.Id })
-            </td>*@
             <td>
-                @Html.RouteLink("Заблокировать счет", new { controller = "BankAccount", action = "BlockBankAccount", id = item.Id })
+                @Html.DisplayFor(modelItem => item.Name)
             </td>
-        }
-    </tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Balance)
+            </td>
+            @if (item.LockoutEnabled)
+            {
+                <td>
+                    @Html.RouteLink("Разблокировать счет", new { controller = "BankAccount", action = "UnBlockBankAccount", id = item.Id })
+                </td>
+                <td>
+                    Счет заблокирован
+                </td>
+            }
+            else
+            {
+                <td>
+                    @Html.RouteLink("Заблокировать счет", new { controller = "BankAccount", action = "BlockBankAccount", id = item.Id })
+                </td>
+                <td></td>
+            }
+        </tr>
     }
 </table>

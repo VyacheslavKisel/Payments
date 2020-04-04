@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Service.Interfaces
 {
+    // Интерфейс репозитория
     public interface IRepository<T> where T : class
     {
         Task<T> GetAsync(int id);
