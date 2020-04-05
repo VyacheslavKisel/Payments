@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNet.Identity.Owin;
 using Payments.ViewModels;
 using Payments.ViewModels.BankAccount;
-using Payments.Service;
+using Payments.Services;
 using Service;
 using Service.Models;
 using System;

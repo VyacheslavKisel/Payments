@@ -9,6 +9,11 @@
     @Html.RouteLink("Добавить платеж", new { controller = "Payment", action = "PreparePayment", id = ViewBag.BankAccountId })
 </p>
 
+<p>
+    @Html.RouteLink("Пополнить счет другой карты", 
+    new { controller = "Payment", action = "ReplenishBankAccount", id = ViewBag.BankAccountId })
+</p>
+
 <div>
     @Html.ActionLink("Отсортировать по номеру в порядке возрастания",
     "PaymentData", new { sortOrder = "Number" })

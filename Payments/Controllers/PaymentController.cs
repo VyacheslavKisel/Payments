@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNet.Identity.Owin;
+using Payments.Services;
 using Payments.ViewModels;
 using Payments.ViewModels.BankAccount;
 using Payments.ViewModels.Payment;
@@ -40,8 +41,8 @@ namespace Payments.Controllers
         {
             ViewBag.BankAccountId = id;
             IEnumerable<Payment> payments = await database.Payments
-                .FindAllAsync(payment => payment.BankAccountId == id && 
-                (payment.Status == "отправленный" || payment.Status == "отклоненный"));
+                .FindAllAsync(payment => payment.BankAccountId == id &&
+                (payment.Status == "отправленный"));
             var paymentsCurrentBankAccount = payments
                 .Select(payment => new PaymentBankAccount(payment.Id, payment.DateTime, payment.Status,
                 payment.Sum, payment.Recipient, payment.CodeEgrpou, payment.CodeIban, payment.Purpose))
@@ -85,7 +86,7 @@ namespace Payments.Controllers
             {
                 foreach (var itemBankAccount in bankAccountsUser)
                 {
-                    if(item.BankAccountId == itemBankAccount.Id && item.Status == "подготовленный")
+                    if (item.BankAccountId == itemBankAccount.Id && item.Status == "подготовленный")
                     {
                         PreparedPayment preparedPayment = new PreparedPayment(item.Id,
                             item.DateTime, item.Status, item.Sum, item.Recipient, item.CodeEgrpou,
@@ -108,7 +109,7 @@ namespace Payments.Controllers
         [HttpPost]
         public async Task<ActionResult> PreparePayment(PreparationPaymentModel model)
         {
-            if(ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 Payment payment = new Payment()
                 {
@@ -128,6 +129,38 @@ namespace Payments.Controllers
             return View(model);
         }
 
+        // Пополнить один счет другим счетом
+        [Authorize(Roles = "client")]
+        [HttpGet]
+        public ActionResult ReplenishBankAccount(int id)
+        {
+            ViewBag.BankAccountId = id;
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<ActionResult> ReplenishBankAccount(ReplenishBankAccountModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                Payment payment = new Payment()
+                {
+                    Sum = Convert.ToDouble(model.Sum),
+                    BankAccountId = model.BankAccountId,
+                    DateTime = DateTime.Now,
+                    Status = "подготовленный",
+                    Purpose = "Пополнение банковского счета",
+                    Recipient = "Текущий банк",
+                    CodeEgrpou = "55558888",
+                    CodeIban = "UA" + "12" + "555789" + "00000" + model.NumberBankAccount
+                };
+                database.Payments.Create(payment);
+                await database.SaveAsync();
+                return RedirectToAction("PreparedPaymentsData");
+            }
+            return View();
+        }
+
         // Подтвердить платеж
         [HttpPost]
         public async Task<ActionResult> Pay(List<PreparedPayment> model)
@@ -136,13 +169,22 @@ namespace Payments.Controllers
             {
                 Payment payment = await database.Payments.GetAsync(item.Id);
                 BankAccount bankAccount = await database.BankAccounts.FindAsync(p => p.Id == payment.BankAccountId);
-                if(bankAccount.Balance >= payment.Sum)
+                if (bankAccount.Balance >= payment.Sum)
                 {
                     payment.Status = "отправленный";
                     payment.DateTime = DateTime.Now;
                     bankAccount.Balance -= payment.Sum;
                     database.Payments.Update(payment);
                     database.BankAccounts.Update(bankAccount);
+                    if (payment.CodeIban.Substring(0, 2) == "UA"
+                   && payment.CodeIban.Substring(4, 6) == "555789")
+                    {
+                        string numberBankAccountReceiver = payment.CodeIban.Substring(15);
+                        BankAccount bankAccountReceiver = await database.BankAccounts
+                            .FindAsync(b => b.NumberAccount == numberBankAccountReceiver);
+                        bankAccountReceiver.Balance += payment.Sum;
+                        database.BankAccounts.Update(bankAccountReceiver);
+                    }
                     await database.SaveAsync();
                 }
             }

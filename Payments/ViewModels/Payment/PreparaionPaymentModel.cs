@@ -15,7 +15,6 @@ namespace Payments.ViewModels.Payment
 
         [Required(ErrorMessage = "Введите сумму платежа")]
         [Display(Name = "Сумма")]
-        //[Range(0.01, double.MaxValue, ErrorMessage = "Платеж не может быть меньше 0.01")]
         [RegularExpression(@"\d{1,},{0,1}\d{0,2}", ErrorMessage = "Сумма должна быть либо целым числом, " +
             "либо дробным с одним или двумя знаками после запятой")]
         public string Sum { get; set; }
