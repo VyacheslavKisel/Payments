@@ -1,5 +1,4 @@
-﻿@using Microsoft.AspNet.Identity
-@model IEnumerable<Service.Models.ApplicationUser>
+﻿@model IEnumerable<Payments.ViewModels.Account.DataAboutApplicationUserForAdmin>
 
 @{
     ViewBag.Title = "Data about users";
@@ -25,10 +24,6 @@
 
     @foreach (var item in Model)
     {
-        if (item.Id == User.Identity.GetUserId())
-        {
-            continue;
-        }
         <tr>
             <td>
                 @Html.DisplayFor(modelItem => item.Email)
@@ -44,19 +39,25 @@
             </td>
             @if (item.LockoutEnabled)
             {
-                <td></td>
                 <td>
                     @Html.ActionLink("Разблокировать", "UnBlockUserAccount", new { id = item.Id })
                 </td>
+                <td></td>
             }
             else
             {
                 <td>
-                    @Html.RouteLink("Счета пользователя", new { controller = "BankAccount", action = "BankAccountsDataForAdmin", id = item.Id })
-                </td>
-                <td>
                     @Html.ActionLink("Заблокировать", "BlockUserAccount", new { id = item.Id })
                 </td>
+                <td>
+                    @Html.RouteLink("Счета пользователя", new { controller = "BankAccount", action = "BankAccountsDataForAdmin", id = item.Id })
+                </td>
+                if (item.NumberUnblockRequests > 0)
+                {
+                    <td style="color: red;">
+                        @item.NumberUnblockRequests Запросы на разблокирование банковских счетов
+                    </td>
+                }
             }
         </tr>
     }

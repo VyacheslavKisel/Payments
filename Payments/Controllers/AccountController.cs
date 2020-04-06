@@ -4,6 +4,7 @@ using Microsoft.Owin.Security;
 using Payments.ViewModels;
 using Payments.ViewModels.Account;
 using Service.Models;
+using Service.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,6 +39,13 @@ namespace Payments.Controllers
             {
                 return HttpContext.GetOwinContext().Authentication;
             }
+        }
+
+        private UnitOfWork database;
+
+        public AccountController()
+        {
+            database = new UnitOfWork();
         }
 
         [HttpGet]
@@ -127,9 +135,34 @@ namespace Payments.Controllers
         }
 
         [Authorize(Roles = "administrator")]
-        public ActionResult DataUsers()
+        public async Task<ActionResult> DataUsers()
         {
-            return View(UserManager.Users);
+            IEnumerable<BankAccount> bankAccountsUser = null;
+            IEnumerable<BankAccount> bankAccountsUserRequestUnblock = null;
+            List<int> countBankAccountsUser = new List<int>();
+            IEnumerable<ApplicationUser> users = UserManager.Users;
+            foreach (var item in users)
+            {
+                bankAccountsUser = await database.BankAccounts
+                .FindAllAsync(p => p.ApplicationUserId == item.Id);
+                bankAccountsUserRequestUnblock = bankAccountsUser.Where(p => p.RequestUnblock == true);
+                countBankAccountsUser.Add(bankAccountsUserRequestUnblock.Count());
+            }
+            List<DataAboutApplicationUserForAdmin> dataAboutApplicationUserForAdmins =
+                new List<DataAboutApplicationUserForAdmin>();
+            int i = 0;
+            string adminId = User.Identity.GetUserId();
+            foreach (var item in users)
+            {
+                if (item.Id != adminId)
+                {
+                    dataAboutApplicationUserForAdmins.Add(new DataAboutApplicationUserForAdmin(
+                        item.Id, item.Email, item.UserName, item.LockoutEnabled,
+                        item.LockoutEndDateUtc, countBankAccountsUser[i]));
+                }
+                i++;
+            }
+            return View(dataAboutApplicationUserForAdmins);
         }
 
         // Блокировка пользователя
