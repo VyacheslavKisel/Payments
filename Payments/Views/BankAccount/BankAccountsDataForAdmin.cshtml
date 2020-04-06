@@ -7,6 +7,22 @@
 <h2>Банковские счета пользователя</h2>
 
 <table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.NumberAccount)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.NumberAccount)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Name)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Balance)
+        </th>
+        <th></th>
+    </tr>
+
     @foreach (var item in Model)
     {
         <tr>
@@ -27,9 +43,19 @@
                 <td>
                     @Html.RouteLink("Разблокировать счет", new { controller = "BankAccount", action = "UnBlockBankAccount", id = item.Id })
                 </td>
-                <td>
-                    Счет заблокирован
-                </td>
+                if (item.RequestUnblock)
+                {
+                    <td>
+                        Счет заблокирован. 
+                        <span style="color: red;">Клиент сделал запрос, чтобы разблокировали его банковский счет</span>
+                    </td>
+                }
+                else
+                {
+                    <td>
+                        Счет заблокирован
+                    </td>
+                }
             }
             else
             {

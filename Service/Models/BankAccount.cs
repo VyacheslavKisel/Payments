@@ -16,6 +16,7 @@ namespace Service.Models
         public string Name { get; set; }
         public double Balance { get; set; }
         public bool LockoutEnabled { get; set; }
+        public bool RequestUnblock { get; set; }
 
         [MaxLength(128)]
         public string ApplicationUserId { get; set; }

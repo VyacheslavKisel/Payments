@@ -77,7 +77,8 @@ namespace Payments.Controllers
                 .FindAllAsync(bankAccount => bankAccount.ApplicationUserId == id);
             var bankAccountsUser = bankAccountsAll
                 .Select(bankAccount => new BankAccountUserDataForAdmin(bankAccount.Id, bankAccount.NumberAccount,
-                bankAccount.NumberCard, bankAccount.Name, bankAccount.Balance, bankAccount.LockoutEnabled))
+                bankAccount.NumberCard, bankAccount.Name, bankAccount.Balance, 
+                bankAccount.LockoutEnabled, bankAccount.RequestUnblock))
                 .ToList();
             return View(bankAccountsUser);
         }
@@ -116,6 +117,7 @@ namespace Payments.Controllers
                     Balance = 20000,
                     ApplicationUserId = model.ApplicationUserId,
                     LockoutEnabled = false,
+                    RequestUnblock = false,
                     NumberAccount = formedNumberBankAccount
                 };
                 database.BankAccounts.Create(bankAccount);
@@ -144,6 +146,7 @@ namespace Payments.Controllers
         {
             BankAccount bankAccount = await database.BankAccounts.GetAsync(id);
             bankAccount.LockoutEnabled = false;
+            bankAccount.RequestUnblock = false;
             database.BankAccounts.Update(bankAccount);
             await database.SaveAsync();
             return RedirectToAction("DataUsers", "Account");
@@ -156,6 +159,18 @@ namespace Payments.Controllers
         {
             BankAccount bankAccount = await database.BankAccounts.GetAsync(id);
             bankAccount.LockoutEnabled = true;
+            database.BankAccounts.Update(bankAccount);
+            await database.SaveAsync();
+            return RedirectToAction("Security", "Home");
+        }
+
+        // Запрос клиента администратору
+        // разблокировать счет
+        [Authorize(Roles = "client")]
+        public async Task<ActionResult> RequestUnblockBankAccount(int id)
+        {
+            BankAccount bankAccount = await database.BankAccounts.GetAsync(id);
+            bankAccount.RequestUnblock = true;
             database.BankAccounts.Update(bankAccount);
             await database.SaveAsync();
             return RedirectToAction("Security", "Home");

@@ -7,7 +7,8 @@ namespace Payments.ViewModels.BankAccount
 {
     public class BankAccountSecurityModel
     {
-        public BankAccountSecurityModel(int id, string numberAccount, string numberCard, string name, double balance, bool lockoutEnabled)
+        public BankAccountSecurityModel(int id, string numberAccount, string numberCard, string name,
+            double balance, bool lockoutEnabled, bool requestUnblock)
         {
             Id = id;
             NumberAccount = numberAccount;
@@ -15,6 +16,7 @@ namespace Payments.ViewModels.BankAccount
             Name = name;
             Balance = balance;
             LockoutEnabled = lockoutEnabled;
+            RequestUnblock = requestUnblock;
         }
         public int Id { get; }
         public string NumberAccount { get; }
@@ -22,5 +24,6 @@ namespace Payments.ViewModels.BankAccount
         public string Name { get; }
         public double Balance { get; }
         public bool LockoutEnabled { get; }
+        public bool RequestUnblock { get; }
     }
 }

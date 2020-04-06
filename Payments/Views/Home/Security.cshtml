@@ -6,58 +6,79 @@
 
 <h2>Счета</h2>
 
-<table class="table">
-    <tr>
-        <th>
-            Номер счета
-        </th>
-        <th>
-            Номер карты
-        </th>
-        <th>
-            Наименование счета
-        </th>
-        <th>
-            Остаток средств
-        </th>
-        <th></th>
-    </tr>
+@if (Model.Count() > 0)
+{
+    <table class="table">
 
-    @foreach (var item in Model)
-    {
         <tr>
-            @if (item.LockoutEnabled)
-            {
-                <td>
-                    @Html.DisplayFor(modelItem => item.NumberAccount)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.NumberCard)
-                </td>
-                <td></td>
-                <td></td>
-                <td>
-                    Счет заблокирован
-                </td>
-            }
-            else
-            {
-                <td>
-                    @Html.DisplayFor(modelItem => item.NumberAccount)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.NumberCard)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Name)
-                </td>
-                <td>
-                    @Html.DisplayFor(modelItem => item.Balance)
-                </td>
-                <td>
-                    @Html.RouteLink("Заблокировать счет", new { controller = "BankAccount", action = "BlockSelfBankAccount", id = item.Id })
-                </td>
-            }
+            <th>
+                Номер счета
+            </th>
+            <th>
+                Номер карты
+            </th>
+            <th>
+                Наименование счета
+            </th>
+            <th>
+                Остаток средств
+            </th>
+            <th></th>
         </tr>
-    }
-</table>
+
+
+        @foreach (var item in Model)
+        {
+            <tr>
+                @if (item.LockoutEnabled)
+                {
+                    <td>
+                        @Html.DisplayFor(modelItem => item.NumberAccount)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.NumberCard)
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        Счет заблокирован
+                    </td>
+                    if (item.RequestUnblock)
+                    {
+                        <td>
+                            Запрос на разблокирование банковского счета отправлен администратору.
+                        </td>
+                    }
+                    else
+                    {
+                        <td>
+                            @Html.RouteLink("Запрос на разблокирование", new { controller = "BankAccount", action = "RequestUnblockBankAccount", id = item.Id })
+                        </td>
+                    }
+                }
+                else
+                {
+                    <td>
+                        @Html.DisplayFor(modelItem => item.NumberAccount)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.NumberCard)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Name)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Balance)
+                    </td>
+                    <td>
+                        @Html.RouteLink("Заблокировать счет", new { controller = "BankAccount", action = "BlockSelfBankAccount", id = item.Id })
+                    </td>
+                }
+            </tr>
+        }
+    </table>
+}
+else
+{
+    <p>К данной учетной записи не привязаны банковские счета</p>
+}

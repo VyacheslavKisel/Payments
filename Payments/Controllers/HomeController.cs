@@ -43,7 +43,7 @@ namespace Payments.Controllers
                 FindAllAsync(bankAccount => bankAccount.ApplicationUserId == currentUser.Id);
             var bankAccountsUser = bankAccountsAll
                 .Select(bankAccount => new BankAccountSecurityModel(bankAccount.Id, bankAccount.NumberAccount, bankAccount.NumberCard,
-                bankAccount.Name, bankAccount.Balance, bankAccount.LockoutEnabled))
+                bankAccount.Name, bankAccount.Balance, bankAccount.LockoutEnabled, bankAccount.RequestUnblock))
                 .ToList();
             return View(bankAccountsUser);
         }
