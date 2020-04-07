@@ -152,13 +152,20 @@ namespace Payments.Controllers
                 new List<DataAboutApplicationUserForAdmin>();
             int i = 0;
             string adminId = User.Identity.GetUserId();
+            DateTime? lockoutEndDate = null;
             foreach (var item in users)
             {
+                lockoutEndDate = item.LockoutEndDateUtc;
+                if(lockoutEndDate != null)
+                {
+                    DateTime localLockoutEndDate = (DateTime)lockoutEndDate;
+                    lockoutEndDate = (DateTime?)localLockoutEndDate.AddHours(3);
+                }
                 if (item.Id != adminId)
                 {
                     dataAboutApplicationUserForAdmins.Add(new DataAboutApplicationUserForAdmin(
                         item.Id, item.Email, item.UserName, item.LockoutEnabled,
-                        item.LockoutEndDateUtc, countBankAccountsUser[i]));
+                        lockoutEndDate, countBankAccountsUser[i]));
                 }
                 i++;
             }
@@ -178,19 +185,25 @@ namespace Payments.Controllers
             {
                 return HttpNotFound();
             }
+            DateTime? lockoutEndDate = applicationUser.LockoutEndDateUtc;
+            if (lockoutEndDate != null)
+            {
+                DateTime localLockoutEndDate = (DateTime)lockoutEndDate;
+                lockoutEndDate = (DateTime?)localLockoutEndDate.AddHours(3);
+            }
             UserBlockData userBlockData = new UserBlockData()
             {
                 UserId = applicationUser.Id,
                 Email = applicationUser.Email,
-                LockoutEnabled = applicationUser.LockoutEnabled,
+                LockoutEnabled = applicationUser.LockoutEnabled
             };
             if (applicationUser.LockoutEndDateUtc == null)
             {
-                userBlockData.DateTimeBlock = DateTime.UtcNow;
+                userBlockData.DateTimeBlock = DateTime.Now;
             }
             else
             {
-                userBlockData.DateTimeBlock = (DateTime)applicationUser.LockoutEndDateUtc;
+                userBlockData.DateTimeBlock = (DateTime)lockoutEndDate;
             }
             return View(userBlockData);
         }
@@ -225,6 +238,12 @@ namespace Payments.Controllers
             {
                 return HttpNotFound();
             }
+            DateTime? lockoutEndDate = applicationUser.LockoutEndDateUtc;
+            if (lockoutEndDate != null)
+            {
+                DateTime localLockoutEndDate = (DateTime)lockoutEndDate;
+                lockoutEndDate = (DateTime?)localLockoutEndDate.AddHours(3);
+            }
             UserBlockData userBlockData = new UserBlockData()
             {
                 UserId = applicationUser.Id,
@@ -233,11 +252,11 @@ namespace Payments.Controllers
             };
             if (applicationUser.LockoutEndDateUtc == null)
             {
-                userBlockData.DateTimeBlock = DateTime.UtcNow;
+                userBlockData.DateTimeBlock = DateTime.Now;
             }
             else
             {
-                userBlockData.DateTimeBlock = (DateTime)applicationUser.LockoutEndDateUtc;
+                userBlockData.DateTimeBlock = (DateTime)lockoutEndDate;
             }
             return View(userBlockData);
         }

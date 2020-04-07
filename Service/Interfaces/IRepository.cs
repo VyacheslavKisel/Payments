@@ -11,6 +11,7 @@ namespace Service.Interfaces
     {
         Task<T> GetAsync(int id);
         Task<IEnumerable<T>> GetAllAsync();
+        Task<IEnumerable<T>> GetAllIncludeLinkedDataAsync();
         Task<T> FindAsync(Func<T, Boolean> predicate);
         Task<IEnumerable<T>> FindAllAsync(Func<T, Boolean> predicate);
         void Create(T item);

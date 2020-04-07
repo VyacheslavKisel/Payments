@@ -69,7 +69,7 @@ namespace Payments.Controllers
         }
 
         // Банковские счета конкретного пользователя
-        // доступны для просмотра и дальнейшей блокировки админиситратором
+        // доступны для просмотра и дальнейшей блокировки администратором
         [Authorize(Roles = "administrator")]
         public async Task<ActionResult> BankAccountsDataForAdmin(string id)
         {

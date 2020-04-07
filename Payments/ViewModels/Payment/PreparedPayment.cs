@@ -7,10 +7,11 @@ namespace Payments.ViewModels.Payment
 {
     public class PreparedPayment
     {
-        public PreparedPayment(int id, DateTime dateTime, string status, double sum,
+        public PreparedPayment(int id, string numberAccount, DateTime dateTime, string status, double sum,
             string recipient, string codeEgrpou, string codeIban, string purpose)
         {
             Id = id;
+            NumberAccount = numberAccount;
             DateTime = dateTime;
             Status = status;
             Sum = sum;
@@ -20,13 +21,14 @@ namespace Payments.ViewModels.Payment
             Purpose = purpose;
         }
         public PreparedPayment() { }
-        public int Id { get; set; }
-        public DateTime DateTime { get; set; }
-        public string Status { get; set; }
-        public double Sum { get; set; }
-        public string Recipient { get; set; }
-        public string CodeEgrpou { get; set; }
-        public string CodeIban { get; set; }
-        public string Purpose { get; set; }
+        public int Id { get; }
+        public string NumberAccount { get; }
+        public DateTime DateTime { get; }
+        public string Status { get; }
+        public double Sum { get; }
+        public string Recipient { get; }
+        public string CodeEgrpou { get; }
+        public string CodeIban { get; }
+        public string Purpose { get; }
     }
 }

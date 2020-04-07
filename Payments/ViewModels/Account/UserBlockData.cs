@@ -11,12 +11,16 @@ namespace Payments.ViewModels.Account
     public class UserBlockData
     {
         public string UserId { get; set; }
+
+        [Display(Name = "Адрес электронной почты")]
         public string Email { get; set; }
+
+        [Display(Name = "Заблокирована учетная запись или нет")]
         public bool LockoutEnabled { get; set; }
 
-        [Required(ErrorMessage = "Введите дату и время, до которой вы хотите заблокировать аккаунт")]
-        [DataType(DataType.DateTime, ErrorMessage = "Введите дату и время в формате yyyy.mm.dd hh:nn," +
-            " где yyyy - год, mm - месяц, dd - день, hh - часы, yy - минуты")]
+        [Display(Name = "Дата, до которой заблокирована учетная запись")]
+        [Required(ErrorMessage = "Введите дату до которой вы хотите заблокировать учетную запись")]
+        [DataType(DataType.Date)]
         public DateTime DateTimeBlock { get; set; }
     }
 }

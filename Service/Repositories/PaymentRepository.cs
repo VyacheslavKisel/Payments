@@ -29,6 +29,11 @@ namespace Service.Repositories
             return await applicationContext.Payments.ToListAsync();
         }
 
+        public async Task<IEnumerable<Payment>> GetAllIncludeLinkedDataAsync()
+        {
+            return await applicationContext.Payments.Include(p => p.BankAccount).ToListAsync();
+        }
+
         public void Create(Payment payment)
         {
             applicationContext.Payments.Add(payment);

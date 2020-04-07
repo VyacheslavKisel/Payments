@@ -80,7 +80,7 @@ namespace Payments.Controllers
                 .Select(bankAccount => new BankAccountUser(bankAccount.Id, bankAccount.NumberAccount, bankAccount.NumberCard,
                 bankAccount.Name, bankAccount.Balance))
                 .ToList();
-            IEnumerable<Payment> payments = await database.Payments.GetAllAsync();
+            IEnumerable<Payment> payments = await database.Payments.GetAllIncludeLinkedDataAsync();
             List<PreparedPayment> preparedPaymentsBankAccount = new List<PreparedPayment>();
             foreach (var item in payments)
             {
@@ -88,7 +88,7 @@ namespace Payments.Controllers
                 {
                     if (item.BankAccountId == itemBankAccount.Id && item.Status == "подготовленный")
                     {
-                        PreparedPayment preparedPayment = new PreparedPayment(item.Id,
+                        PreparedPayment preparedPayment = new PreparedPayment(item.Id, item.BankAccount.NumberAccount,
                             item.DateTime, item.Status, item.Sum, item.Recipient, item.CodeEgrpou,
                             item.CodeIban, item.Purpose);
                         preparedPaymentsBankAccount.Add(preparedPayment);

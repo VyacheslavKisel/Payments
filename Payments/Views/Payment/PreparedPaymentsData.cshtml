@@ -11,6 +11,9 @@
     <table class="table">
         <tr>
             <th>
+                Номер счета
+            </th>
+            <th>
                 Сумма платежа
             </th>
             <th>
@@ -32,6 +35,9 @@
         {
             @Html.HiddenFor(m => m[i].Id)
             <tr>
+                <td>
+                    @Html.DisplayFor(m => m[i].NumberAccount)
+                </td>
                 <td>
                     @Html.DisplayFor(m => m[i].Sum)
                 </td>
