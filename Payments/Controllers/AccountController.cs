@@ -212,6 +212,11 @@ namespace Payments.Controllers
         [Authorize(Roles = "administrator")]
         public async Task<ActionResult> BlockUserAccount(UserBlockData userBlockData)
         {
+            if(userBlockData.DateTimeBlock <= DateTime.Now)
+            {
+                ModelState.AddModelError("DateTimeBlock",
+                    "Дата, до которой будет заблокирован пользователь должна быть в будущем времени");
+            }
             if (ModelState.IsValid)
             {
                 var result = await UserManager.SetLockoutEnabledAsync(userBlockData.UserId, true);
@@ -222,7 +227,7 @@ namespace Payments.Controllers
                 }
                 return RedirectToAction("DataUsers");
             }
-            return View();
+            return View(userBlockData);
         }
 
         // Разблокировка пользователей

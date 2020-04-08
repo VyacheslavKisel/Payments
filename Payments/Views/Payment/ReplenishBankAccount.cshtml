@@ -10,7 +10,7 @@
 @using (Html.BeginForm("ReplenishBankAccount", "Payment", FormMethod.Post))
 {
     @Html.AntiForgeryToken()
-    <input type="hidden" value="@ViewBag.BankAccountId" name="BankAccountId" />
+    <input type="hidden" value="@Model.BankAccountId" name="BankAccountId" />
     <hr />
     @Html.ValidationSummary(true, "", new { @class = "text-danger" })
     <div class="form-group">

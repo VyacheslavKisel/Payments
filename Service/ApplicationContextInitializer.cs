@@ -24,7 +24,7 @@ namespace Service
             roleManager.Create(adminRole);
             roleManager.Create(clientRole);
 
-            string password = "123456";
+            string password = "654321";
             var admin = new ApplicationUser { Email = "admin@gmail.com", UserName = "admin@gmail.com" };
             var result = userManager.Create(admin, password);
 

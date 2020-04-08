@@ -30,37 +30,37 @@
             </th>
             <th></th>
         </tr>
-        
+
         @for (int i = 0; i < Model.Count; i++)
-        {
-            @Html.HiddenFor(m => m[i].Id)
-            <tr>
-                <td>
-                    @Html.DisplayFor(m => m[i].NumberAccount)
-                </td>
-                <td>
-                    @Html.DisplayFor(m => m[i].Sum)
-                </td>
-                <td>
-                    @Html.DisplayFor(m => m[i].Recipient)
-                </td>
-                <td>
-                    @Html.DisplayFor(m => m[i].CodeEgrpou)
-                </td>
-                <td>
-                    @Html.DisplayFor(m => m[i].CodeIban)
-                </td>
-                <td>
-                    @Html.DisplayFor(m => m[i].Purpose)
-                </td>
-                <td>
-                    @Html.RouteLink("Отклонить", new { controller = "Payment", action = "RejectPayment", id = Model[i].Id })
-                </td>
-            </tr>
-        }
+            {
+                @Html.HiddenFor(m => m[i].Id)
+                <tr>
+                    <td>
+                        @Html.DisplayFor(m => m[i].NumberAccount)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(m => m[i].Sum)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(m => m[i].Recipient)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(m => m[i].CodeEgrpou)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(m => m[i].CodeIban)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(m => m[i].Purpose)
+                    </td>
+                    <td>
+                        @Html.RouteLink("Отклонить", new { controller = "Payment", action = "RejectPayment", id = Model[i].Id })
+                    </td>
+                </tr>
+            }
     </table>
     if (Model.Count != 0)
     {
-        <input type="submit" value="Подтвердить оплату" class="btn btn-primary"/>
+    <input type="submit" value="Подтвердить оплату" class="btn btn-primary" />
     }
 }

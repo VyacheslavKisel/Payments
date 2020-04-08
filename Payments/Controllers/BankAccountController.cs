@@ -124,7 +124,7 @@ namespace Payments.Controllers
                 await database.SaveAsync();
                 return RedirectToAction("BankAccountsData", "BankAccount");
             }
-            return View();
+            return View(model);
         }
 
         // Возможность администратора заблокировать

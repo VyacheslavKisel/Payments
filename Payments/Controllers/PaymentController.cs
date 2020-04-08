@@ -28,7 +28,6 @@ namespace Payments.Controllers
             }
         }
 
-        //ApplicationContext _db = new ApplicationContext();
         private UnitOfWork database;
 
         public PaymentController()
@@ -134,13 +133,20 @@ namespace Payments.Controllers
         [HttpGet]
         public ActionResult ReplenishBankAccount(int id)
         {
-            ViewBag.BankAccountId = id;
-            return View();
+            ReplenishBankAccountModel replenishBankAccountModel = new ReplenishBankAccountModel();
+            replenishBankAccountModel.BankAccountId = id;
+            return View(replenishBankAccountModel);
         }
 
         [HttpPost]
         public async Task<ActionResult> ReplenishBankAccount(ReplenishBankAccountModel model)
         {
+            BankAccount bankAccount = await database.BankAccounts
+                    .FindAsync(b => b.NumberAccount == model.NumberBankAccount);
+            if(bankAccount == null)
+            {
+                ModelState.AddModelError("NumberBankAccount", "Нет номера счета в текущем банке");
+            }
             if (ModelState.IsValid)
             {
                 Payment payment = new Payment()
@@ -158,7 +164,7 @@ namespace Payments.Controllers
                 await database.SaveAsync();
                 return RedirectToAction("PreparedPaymentsData");
             }
-            return View();
+            return View(model);
         }
 
         // Подтвердить платеж
@@ -168,7 +174,7 @@ namespace Payments.Controllers
             foreach (var item in model)
             {
                 Payment payment = await database.Payments.GetAsync(item.Id);
-                BankAccount bankAccount = await database.BankAccounts.FindAsync(p => p.Id == payment.BankAccountId);
+                BankAccount bankAccount = await database.BankAccounts.FindAsync(b => b.Id == payment.BankAccountId);
                 if (bankAccount.Balance >= payment.Sum)
                 {
                     payment.Status = "отправленный";
