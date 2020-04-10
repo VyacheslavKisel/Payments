@@ -1,4 +1,5 @@
-﻿using Service.Interfaces;
+﻿using Microsoft.AspNet.Identity.EntityFramework;
+using Service.Interfaces;
 using Service.Models;
 using System;
 using System.Collections.Generic;
@@ -13,9 +14,13 @@ namespace Service.Repositories
         private ApplicationContext applicationContext;
         private BankAccountRepository bankAccountRepository;
         private PaymentRepository paymentRepository;
+        private ApplicationUserManager userManager;
+        private ApplicationRoleManager roleManager;
         public UnitOfWork()
         {
             applicationContext = new ApplicationContext();
+            userManager = new ApplicationUserManager(new UserStore<ApplicationUser>(applicationContext));
+            roleManager = new ApplicationRoleManager(new RoleStore<ApplicationRole>(applicationContext));
         }
 
         public IRepository<BankAccount> BankAccounts
@@ -39,6 +44,22 @@ namespace Service.Repositories
                     paymentRepository = new PaymentRepository(applicationContext);
                 }
                 return paymentRepository;
+            }
+        }
+
+        public ApplicationUserManager UserManager
+        {
+            get
+            {
+                return userManager;
+            }
+        }
+
+        public ApplicationRoleManager RoleManager
+        {
+            get
+            {
+                return roleManager;
             }
         }
 

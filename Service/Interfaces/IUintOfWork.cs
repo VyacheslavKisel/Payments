@@ -11,6 +11,8 @@ namespace Service.Interfaces
     {
         IRepository<BankAccount> BankAccounts { get; }
         IRepository<Payment> Payments { get; }
+        ApplicationUserManager UserManager { get; }
+        ApplicationRoleManager RoleManager { get; }
         Task SaveAsync();
     }
 }

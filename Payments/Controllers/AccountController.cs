@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNet.Identity;
+﻿using AutoMapper;
+using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
+using Payments.BLL.DTO.Account;
+using Payments.BLL.Infrastructure;
+using Payments.BLL.Services;
 using Payments.ViewModels;
 using Payments.ViewModels.Account;
-using Service.Models;
-using Service.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,19 +19,18 @@ namespace Payments.Controllers
 {
     public class AccountController : Controller
     {
-        private ApplicationUserManager UserManager
+        private BankAccountService bankAccountService;
+
+        public AccountController()
         {
-            get
-            {
-                return HttpContext.GetOwinContext().GetUserManager<ApplicationUserManager>();
-            }
+            bankAccountService = new BankAccountService();
         }
 
-        private ApplicationRoleManager RoleManager
+        private UserService UserService
         {
             get
             {
-                return HttpContext.GetOwinContext().GetUserManager<ApplicationRoleManager>();
+                return HttpContext.GetOwinContext().GetUserManager<UserService>();
             }
         }
 
@@ -41,13 +42,6 @@ namespace Payments.Controllers
             }
         }
 
-        private UnitOfWork database;
-
-        public AccountController()
-        {
-            database = new UnitOfWork();
-        }
-
         [HttpGet]
         public ActionResult Register()
         {
@@ -55,20 +49,22 @@ namespace Payments.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<ActionResult> Register(RegisterModel model)
         {
             if (ModelState.IsValid)
             {
-                string userRole = "client";
-                ApplicationRole role = await RoleManager.FindByNameAsync(userRole);
-                ApplicationUser user = new ApplicationUser { UserName = model.Email, Email = model.Email };
-                Microsoft.AspNet.Identity.IdentityResult result = await UserManager.CreateAsync(user, model.Password);
-                if (result.Succeeded)
+                UserDTO userDTO = new UserDTO
                 {
-                    await UserManager.AddToRoleAsync(user.Id, role.Name);
-                    ClaimsIdentity claim = await UserManager.CreateIdentityAsync(user,
-                        DefaultAuthenticationTypes.ApplicationCookie);
-                    AuthenticationManager.SignOut();
+                    Email = model.Email,
+                    UserName = model.Email,
+                    Password = model.Password,
+                    Role = "client"
+                };
+                OperationDetails operationDetails = await UserService.Create(userDTO);
+                if (operationDetails.Succeded)
+                {
+                    ClaimsIdentity claim = await UserService.Authenticate(userDTO);
                     AuthenticationManager.SignIn(new AuthenticationProperties
                     {
                         IsPersistent = true
@@ -77,10 +73,7 @@ namespace Payments.Controllers
                 }
                 else
                 {
-                    foreach (string error in result.Errors)
-                    {
-                        ModelState.AddModelError("", error);
-                    }
+                    ModelState.AddModelError(operationDetails.Property, operationDetails.Message);
                 }
             }
             return View(model);
@@ -99,32 +92,31 @@ namespace Payments.Controllers
         {
             if (ModelState.IsValid)
             {
-                ApplicationUser user = await UserManager.FindAsync(model.Email, model.Password);
-                if (user == null)
+                UserDTO userDTO = new UserDTO
+                {
+                    Email = model.Email,
+                    Password = model.Password
+                };
+                ClaimsIdentity claim = await UserService.Authenticate(userDTO);
+                string userId = await UserService.FindUserIdAsync(model.Email);
+                if (claim == null)
                 {
                     ModelState.AddModelError("", "Неверный логин или пароль");
                 }
-                else if (await UserManager.IsLockedOutAsync(user.Id))
+                else if (await UserService.IsLockedOutAsync(userId))
                 {
                     return View("Lockout");
                 }
                 else
                 {
-                    ClaimsIdentity claim = await UserManager.CreateIdentityAsync(user,
-                        DefaultAuthenticationTypes.ApplicationCookie);
                     AuthenticationManager.SignOut();
                     AuthenticationManager.SignIn(new AuthenticationProperties
                     {
                         IsPersistent = true
                     }, claim);
-                    if (String.IsNullOrEmpty(returnUrl))
-                    {
-                        return RedirectToAction("Index", "Home");
-                    }
-                    return Redirect(returnUrl);
+                    return RedirectToAction("Index", "Home");
                 }
             }
-            ViewBag.returnUrl = returnUrl;
             return View(model);
         }
 
@@ -137,38 +129,13 @@ namespace Payments.Controllers
         [Authorize(Roles = "administrator")]
         public async Task<ActionResult> DataUsers()
         {
-            IEnumerable<BankAccount> bankAccountsUser = null;
-            IEnumerable<BankAccount> bankAccountsUserRequestUnblock = null;
-            List<int> countBankAccountsUser = new List<int>();
-            IEnumerable<ApplicationUser> users = UserManager.Users;
-            foreach (var item in users)
-            {
-                bankAccountsUser = await database.BankAccounts
-                .FindAllAsync(p => p.ApplicationUserId == item.Id);
-                bankAccountsUserRequestUnblock = bankAccountsUser.Where(p => p.RequestUnblock == true);
-                countBankAccountsUser.Add(bankAccountsUserRequestUnblock.Count());
-            }
-            List<DataAboutApplicationUserForAdmin> dataAboutApplicationUserForAdmins =
-                new List<DataAboutApplicationUserForAdmin>();
-            int i = 0;
+            var users = UserService.GetUsers();
             string adminId = User.Identity.GetUserId();
-            DateTime? lockoutEndDate = null;
-            foreach (var item in users)
-            {
-                lockoutEndDate = item.LockoutEndDateUtc;
-                if(lockoutEndDate != null)
-                {
-                    DateTime localLockoutEndDate = (DateTime)lockoutEndDate;
-                    lockoutEndDate = (DateTime?)localLockoutEndDate.AddHours(3);
-                }
-                if (item.Id != adminId)
-                {
-                    dataAboutApplicationUserForAdmins.Add(new DataAboutApplicationUserForAdmin(
-                        item.Id, item.Email, item.UserName, item.LockoutEnabled,
-                        lockoutEndDate, countBankAccountsUser[i]));
-                }
-                i++;
-            }
+            var dataAboutApplicationUserForAdminsDTO = await UserService.GetDataAboutUsersAsync(users, adminId);
+            var mapper = new MapperConfiguration(cfg => cfg.CreateMap<FullDataUserForAdminDTO,
+              DataAboutApplicationUserForAdmin>()).CreateMapper();
+            var dataAboutApplicationUserForAdmins = mapper.Map<IEnumerable<FullDataUserForAdminDTO>,
+                 IEnumerable<DataAboutApplicationUserForAdmin>>(dataAboutApplicationUserForAdminsDTO);
             return View(dataAboutApplicationUserForAdmins);
         }
 
@@ -180,31 +147,16 @@ namespace Payments.Controllers
             {
                 return HttpNotFound();
             }
-            ApplicationUser applicationUser = await UserManager.FindByIdAsync(id);
-            if (applicationUser == null)
+
+            UserBlockDataDTO userBlockDataDTO = await UserService.FindUserForBlockAsync(id);
+            if (userBlockDataDTO == null)
             {
                 return HttpNotFound();
             }
-            DateTime? lockoutEndDate = applicationUser.LockoutEndDateUtc;
-            if (lockoutEndDate != null)
-            {
-                DateTime localLockoutEndDate = (DateTime)lockoutEndDate;
-                lockoutEndDate = (DateTime?)localLockoutEndDate.AddHours(3);
-            }
-            UserBlockData userBlockData = new UserBlockData()
-            {
-                UserId = applicationUser.Id,
-                Email = applicationUser.Email,
-                LockoutEnabled = applicationUser.LockoutEnabled
-            };
-            if (applicationUser.LockoutEndDateUtc == null)
-            {
-                userBlockData.DateTimeBlock = DateTime.Now;
-            }
-            else
-            {
-                userBlockData.DateTimeBlock = (DateTime)lockoutEndDate;
-            }
+            var mapper = new MapperConfiguration(cfg => cfg.CreateMap<UserBlockDataDTO,
+              UserBlockData>()).CreateMapper();
+            var userBlockData = mapper.Map<UserBlockDataDTO,
+                 UserBlockData>(userBlockDataDTO);
             return View(userBlockData);
         }
 
@@ -212,19 +164,21 @@ namespace Payments.Controllers
         [Authorize(Roles = "administrator")]
         public async Task<ActionResult> BlockUserAccount(UserBlockData userBlockData)
         {
-            if(userBlockData.DateTimeBlock <= DateTime.Now)
+            try
             {
-                ModelState.AddModelError("DateTimeBlock",
-                    "Дата, до которой будет заблокирован пользователь должна быть в будущем времени");
+                UserService.CheckDateBlock(userBlockData.DateTimeBlock);
+            }
+            catch (ValidationBusinessLogicException exception)
+            {
+                ModelState.AddModelError(exception.Property, exception.Message);
             }
             if (ModelState.IsValid)
             {
-                var result = await UserManager.SetLockoutEnabledAsync(userBlockData.UserId, true);
-                if (result.Succeeded)
-                {
-                    result = await UserManager.SetLockoutEndDateAsync(userBlockData.UserId, (DateTimeOffset)userBlockData.DateTimeBlock);
-                    ApplicationUser applicationUser = await UserManager.FindByIdAsync(userBlockData.UserId);
-                }
+                var mapper = new MapperConfiguration(cfg => cfg.CreateMap<UserBlockData,
+              UserBlockDataDTO>()).CreateMapper();
+                var userBlockDataDTO = mapper.Map<UserBlockData,
+                     UserBlockDataDTO>(userBlockData);
+                await UserService.BlockUserAccount(userBlockDataDTO);
                 return RedirectToAction("DataUsers");
             }
             return View(userBlockData);
@@ -238,46 +192,27 @@ namespace Payments.Controllers
             {
                 return HttpNotFound();
             }
-            ApplicationUser applicationUser = await UserManager.FindByIdAsync(id);
-            if (applicationUser == null)
+            UserBlockDataDTO userBlockDataDTO = await UserService.FindUserForUnBlockAsync(id);
+            if (userBlockDataDTO == null)
             {
                 return HttpNotFound();
             }
-            DateTime? lockoutEndDate = applicationUser.LockoutEndDateUtc;
-            if (lockoutEndDate != null)
-            {
-                DateTime localLockoutEndDate = (DateTime)lockoutEndDate;
-                lockoutEndDate = (DateTime?)localLockoutEndDate.AddHours(3);
-            }
-            UserBlockData userBlockData = new UserBlockData()
-            {
-                UserId = applicationUser.Id,
-                Email = applicationUser.Email,
-                LockoutEnabled = applicationUser.LockoutEnabled,
-            };
-            if (applicationUser.LockoutEndDateUtc == null)
-            {
-                userBlockData.DateTimeBlock = DateTime.Now;
-            }
-            else
-            {
-                userBlockData.DateTimeBlock = (DateTime)lockoutEndDate;
-            }
+            var mapper = new MapperConfiguration(cfg => cfg.CreateMap<UserBlockDataDTO,
+              UserBlockData>()).CreateMapper();
+            var userBlockData = mapper.Map<UserBlockDataDTO,
+                 UserBlockData>(userBlockDataDTO);
             return View(userBlockData);
         }
-
 
         [HttpPost]
         [Authorize(Roles = "administrator")]
         public async Task<ActionResult> UnBlockUserAccount(UserBlockData userBlockData)
         {
-            var result = await UserManager.SetLockoutEnabledAsync(userBlockData.UserId, true);
-            if (result.Succeeded)
-            {
-                result = await UserManager.SetLockoutEndDateAsync(userBlockData.UserId, DateTimeOffset.UtcNow);
-                result = await UserManager.SetLockoutEnabledAsync(userBlockData.UserId, false);
-                ApplicationUser applicationUser = UserManager.FindById(userBlockData.UserId);
-            }
+            var mapper = new MapperConfiguration(cfg => cfg.CreateMap<UserBlockData,
+              UserBlockDataDTO>()).CreateMapper();
+            var userBlockDataDTO = mapper.Map<UserBlockData,
+                 UserBlockDataDTO>(userBlockData);
+            await UserService.UnblockUserAccount(userBlockDataDTO);
             return RedirectToAction("DataUsers");
         }
     }

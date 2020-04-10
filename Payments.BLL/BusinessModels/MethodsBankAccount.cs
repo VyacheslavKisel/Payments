@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Web;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace Payments.Services
+namespace Payments.BLL.BusinessModels
 {
-    public static class ServiceBankAccount
+    // Методы используемые в бизнес логике
+    public static class MethodsBankAccount
     {
+        // Метод по формированию номера банковского счета
         public static string FormNumberAccount()
         {
             Random randDigit = new Random();
