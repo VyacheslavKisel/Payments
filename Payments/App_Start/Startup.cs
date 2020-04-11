@@ -2,6 +2,7 @@
 using Microsoft.Owin;
 using Microsoft.Owin.Security.Cookies;
 using Owin;
+using Payments.BLL.Interfaces;
 using Payments.BLL.Services;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ namespace Payments
 
         public void Configuration(IAppBuilder app)
         {
-            app.CreatePerOwinContext<UserService>(CreateUserService);
+            app.CreatePerOwinContext<IUserService>(CreateUserService);
             app.UseCookieAuthentication(new CookieAuthenticationOptions
             {
                 AuthenticationType = DefaultAuthenticationTypes.ApplicationCookie,
@@ -26,7 +27,7 @@ namespace Payments
             });
         }
 
-        private UserService CreateUserService()
+        private IUserService CreateUserService()
         {
             return serviceCreator.CreateUserService();
         }

@@ -2,6 +2,8 @@
 using Microsoft.AspNet.Identity;
 using Payments.BLL.DTO.Account;
 using Payments.BLL.Infrastructure;
+using Payments.BLL.Interfaces;
+using Service.Interfaces;
 using Service.Models;
 using Service.Repositories;
 using System;
@@ -14,13 +16,13 @@ using System.Threading.Tasks;
 namespace Payments.BLL.Services
 {
     // Сервис по работе с учетными данными пользователей
-    public class UserService : IDisposable
+    public class UserService : IUserService
     {
-        private UnitOfWork database;
+        private IUnitOfWork database;
 
-        public UserService()
+        public UserService(IUnitOfWork unitOfWork)
         {
-            database = new UnitOfWork();
+            database = unitOfWork;
         }
 
         public async Task<OperationDetails> Create(UserDTO userDTO)

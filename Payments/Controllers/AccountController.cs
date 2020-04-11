@@ -4,6 +4,7 @@ using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
 using Payments.BLL.DTO.Account;
 using Payments.BLL.Infrastructure;
+using Payments.BLL.Interfaces;
 using Payments.BLL.Services;
 using Payments.ViewModels;
 using Payments.ViewModels.Account;
@@ -19,18 +20,18 @@ namespace Payments.Controllers
 {
     public class AccountController : Controller
     {
-        private BankAccountService bankAccountService;
+        private IBankAccountService bankAccountService;
 
-        public AccountController()
+        public AccountController(IBankAccountService bankAccountService)
         {
-            bankAccountService = new BankAccountService();
+            this.bankAccountService = bankAccountService;
         }
 
-        private UserService UserService
+        private IUserService UserService
         {
             get
             {
-                return HttpContext.GetOwinContext().GetUserManager<UserService>();
+                return HttpContext.GetOwinContext().GetUserManager<IUserService>();
             }
         }
 
@@ -98,12 +99,12 @@ namespace Payments.Controllers
                     Password = model.Password
                 };
                 ClaimsIdentity claim = await UserService.Authenticate(userDTO);
-                string userId = await UserService.FindUserIdAsync(model.Email);
                 if (claim == null)
                 {
                     ModelState.AddModelError("", "Неверный логин или пароль");
                 }
-                else if (await UserService.IsLockedOutAsync(userId))
+                else if (await UserService.IsLockedOutAsync(
+                    await UserService.FindUserIdAsync(model.Email)))
                 {
                     return View("Lockout");
                 }

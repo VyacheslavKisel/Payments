@@ -1,4 +1,6 @@
 ﻿using Payments.BLL.DTO.Payment;
+using Payments.BLL.Interfaces;
+using Service.Interfaces;
 using Service.Models;
 using Service.Repositories;
 using System;
@@ -10,13 +12,13 @@ using System.Threading.Tasks;
 namespace Payments.BLL.Services
 {
     // Сервис по работе с платежами
-    public class PaymentService
+    public class PaymentService : IPaymentService
     {
-        private UnitOfWork database;
+        private IUnitOfWork database;
 
-        public PaymentService()
+        public PaymentService(IUnitOfWork unitOfWork)
         {
-            database = new UnitOfWork();
+            database = unitOfWork;
         }
 
         public async Task<IEnumerable<PaymentBankAccountDTO>> PaymentData(int id)

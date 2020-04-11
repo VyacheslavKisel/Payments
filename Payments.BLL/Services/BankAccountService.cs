@@ -1,6 +1,8 @@
 ﻿using Payments.BLL.BusinessModels;
 using Payments.BLL.DTO.BankAccount;
 using Payments.BLL.Infrastructure;
+using Payments.BLL.Interfaces;
+using Service.Interfaces;
 using Service.Models;
 using Service.Repositories;
 using System;
@@ -12,13 +14,13 @@ using System.Threading.Tasks;
 namespace Payments.BLL.Services
 {
     // Сервис по работе с банковскими счетами
-    public class BankAccountService
+    public class BankAccountService : IBankAccountService
     {
-        private UnitOfWork database;
+        private IUnitOfWork database;
 
-        public BankAccountService()
+        public BankAccountService(IUnitOfWork unitOfWork)
         {
-            database = new UnitOfWork();
+            database = unitOfWork;
         }
 
         public async Task CreateBankAccount(CreatureBankAccountDTO creatureBankAccountDTO)

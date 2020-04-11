@@ -11,7 +11,7 @@
 {
     @Html.AntiForgeryToken()
 
-    <input type="hidden" value="@ViewBag.UserId" name="ApplicationUserId" />
+    <input type="hidden" value="@Model.ApplicationUserId" name="ApplicationUserId" />
     <hr />
     @Html.ValidationSummary(true, "", new { @class = "text-danger" })
     <div class="form-group">

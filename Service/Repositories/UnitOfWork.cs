@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Service.Repositories
 {
-    public class UnitOfWork : IUintOfWork
+    public class UnitOfWork : IUnitOfWork
     {
         private ApplicationContext applicationContext;
         private BankAccountRepository bankAccountRepository;

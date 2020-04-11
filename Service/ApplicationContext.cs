@@ -14,11 +14,6 @@ namespace Service
     {
         public ApplicationContext() : base("PaymentsContext") { }
 
-        public static ApplicationContext Create()
-        {
-            return new ApplicationContext();
-        }
-
         static ApplicationContext()
         {
             Database.SetInitializer<ApplicationContext>(new ApplicationContextInitializer());

@@ -1,4 +1,9 @@
-﻿using System;
+﻿using Ninject;
+using Ninject.Modules;
+using Ninject.Web.Mvc;
+using Payments.BLL.Infrastructure;
+using Payments.Util;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -16,6 +21,13 @@ namespace Payments
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
+
+            NinjectModule bankAccountModule = new BankAccountModule();
+            NinjectModule paymentModule = new PaymentModule();
+            NinjectModule userModule = new UserModule();
+            NinjectModule serviceModule = new ServiceModule();
+            var kernel = new StandardKernel(bankAccountModule, paymentModule, userModule, serviceModule);
+            DependencyResolver.SetResolver(new NinjectDependencyResolver(kernel));
         }
     }
 }

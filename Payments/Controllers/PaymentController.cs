@@ -2,6 +2,7 @@
 using Microsoft.AspNet.Identity.Owin;
 using Payments.BLL.DTO.Payment;
 using Payments.BLL.Infrastructure;
+using Payments.BLL.Interfaces;
 using Payments.BLL.Services;
 using Payments.Filters;
 using Payments.ViewModels;
@@ -21,21 +22,21 @@ namespace Payments.Controllers
     [Authorize(Roles = "client")]
     public class PaymentController : Controller
     {
-        private BankAccountService bankAccountService;
+        private IBankAccountService bankAccountService;
 
-        private PaymentService paymentService;
+        private IPaymentService paymentService;
 
-        public PaymentController()
+        public PaymentController(IBankAccountService bankAccountService, IPaymentService paymentService)
         {
-            bankAccountService = new BankAccountService();
-            paymentService = new PaymentService();
+            this.bankAccountService = bankAccountService;
+            this.paymentService = paymentService;
         }
 
-        private UserService UserService
+        private IUserService UserService
         {
             get
             {
-                return HttpContext.GetOwinContext().GetUserManager<UserService>();
+                return HttpContext.GetOwinContext().GetUserManager<IUserService>();
             }
         }
 
@@ -89,8 +90,11 @@ namespace Payments.Controllers
         [HttpGet]
         public ActionResult PreparePayment(int id)
         {
-            ViewBag.BankAccountId = id;
-            return View();
+            PreparationPaymentModel model = new PreparationPaymentModel
+            {
+                BankAccountId = id
+            };
+            return View(model);
         }
 
         [HttpPost]

@@ -12,23 +12,24 @@ using System.Web.Mvc;
 using Payments.BLL.Services;
 using Payments.BLL.DTO.BankAccount;
 using AutoMapper;
+using Payments.BLL.Interfaces;
 
 namespace Payments.Controllers
 {
     public class BankAccountController : Controller
     {
-        private BankAccountService bankAccountService;
+        private IBankAccountService bankAccountService;
 
-        public BankAccountController()
+        public BankAccountController(IBankAccountService bankAccountService)
         {
-            bankAccountService = new BankAccountService();
+            this.bankAccountService = bankAccountService;
         }
 
-        private UserService UserService
+        private IUserService UserService
         {
             get
             {
-                return HttpContext.GetOwinContext().GetUserManager<UserService>();
+                return HttpContext.GetOwinContext().GetUserManager<IUserService>();
             }
         }
 
@@ -89,8 +90,11 @@ namespace Payments.Controllers
         {
             string nameCurrentUser = User.Identity.Name;
             string idCurrentUser = await UserService.FindUserIdAsync(nameCurrentUser);
-            ViewBag.UserId = idCurrentUser;
-            return View();
+            CreatureBankAccountModel model = new CreatureBankAccountModel
+            {
+                ApplicationUserId = idCurrentUser
+            };
+            return View(model);
         }
 
         [Authorize(Roles = "client")]
@@ -134,7 +138,7 @@ namespace Payments.Controllers
         public async Task<ActionResult> BlockSelfBankAccount(int? id)
         {
             await bankAccountService.BlockSelfBankAccount(id);
-            return RedirectToAction("Security", "Home");
+            return RedirectToAction("Security", "BankAccount");
         }
 
         // Запрос клиента администратору
@@ -144,7 +148,7 @@ namespace Payments.Controllers
         public async Task<ActionResult> RequestUnblockBankAccount(int? id)
         {
             await bankAccountService.RequestUnblockBankAccount(id);
-            return RedirectToAction("Security", "Home");
+            return RedirectToAction("Security", "BankAccount");
         }
 
         // Клиент может увидеть данные о заблокированных

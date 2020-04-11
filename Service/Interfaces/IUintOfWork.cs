@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Service.Interfaces
 {
-    public interface IUintOfWork : IDisposable
+    public interface IUnitOfWork : IDisposable
     {
         IRepository<BankAccount> BankAccounts { get; }
         IRepository<Payment> Payments { get; }
