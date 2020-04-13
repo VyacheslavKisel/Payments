@@ -13,12 +13,16 @@ using Payments.BLL.Services;
 using Payments.BLL.DTO.BankAccount;
 using AutoMapper;
 using Payments.BLL.Interfaces;
+using NLog;
 
 namespace Payments.Controllers
 {
+    // Контроллер для работы с банковскими счетами
+    [LoggedExceptionFilter]
     public class BankAccountController : Controller
     {
         private IBankAccountService bankAccountService;
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         public BankAccountController(IBankAccountService bankAccountService)
         {
@@ -34,17 +38,24 @@ namespace Payments.Controllers
         }
 
         // Незаблокированные банковские счета конкретного пользователя
+        [LoggedExceptionFilter]
         [Authorize(Roles = "client")]
         public async Task<ActionResult> BankAccountsData(string sortOrder)
         {
             string nameCurrentUser = User.Identity.Name;
             string idCurrentUser = await UserService.FindUserIdAsync(nameCurrentUser);
+
+            logger.Info("Клиент {0} запросил информацию о своих незаблокированных банковских счетах",
+                idCurrentUser);
+
             IEnumerable<BankAccountUserDTO> bankAccountsUserDTO = 
                 await bankAccountService.BankAccountsData(idCurrentUser);
+
             var mapper = new MapperConfiguration(cfg => cfg.CreateMap<BankAccountUserDTO,
                 BankAccountUser>()).CreateMapper();
             var bankAccountsUser = mapper.Map<IEnumerable<BankAccountUserDTO>,
                 IEnumerable<BankAccountUser>>(bankAccountsUserDTO);
+
             switch (sortOrder)
             {
                 case "Number":
@@ -71,11 +82,15 @@ namespace Payments.Controllers
 
         // Банковские счета конкретного пользователя
         // доступны для просмотра и дальнейшей блокировки администратором
+        [LoggedExceptionFilter]
         [Authorize(Roles = "administrator")]
         public async Task<ActionResult> BankAccountsDataForAdmin(string id)
         {
+            logger.Info("Администратор запросил информацию о банковских счетах клиента {0}", id);
+
             IEnumerable<BankAccountDataForAdminDTO> bankAccountsUserDTO =
                 await bankAccountService.BankAccountsDataForAdmin(id);
+
             var mapper = new MapperConfiguration(cfg => cfg.CreateMap<BankAccountDataForAdminDTO,
                 BankAccountUserDataForAdmin>()).CreateMapper();
             var bankAccountsUser = mapper.Map<IEnumerable<BankAccountDataForAdminDTO>,
@@ -105,7 +120,11 @@ namespace Payments.Controllers
             {
                 CreatureBankAccountDTO creatureBankAccountDTO = new CreatureBankAccountDTO(model.ApplicationUserId, 
                     model.NumberCard, model.Name);
+
                 await bankAccountService.CreateBankAccount(creatureBankAccountDTO);
+
+                logger.Info("Клиент {0} создал новый банковский счет", model.ApplicationUserId);
+
                 return RedirectToAction("BankAccountsData", "BankAccount");
             }
             return View(model);
@@ -113,11 +132,15 @@ namespace Payments.Controllers
 
         // Возможность администратора заблокировать
         // банковский счет клиента
+        //[LoggedExceptionFilter]
         [LoggedExceptionFilter]
         [Authorize(Roles = "administrator")]
         public async Task<ActionResult> BlockBankAccount(int? id)
         {
             await bankAccountService.BlockBankAccount(id);
+
+            logger.Info("Банковский счет {0} заблокирован администратором", id);
+
             return RedirectToAction("DataUsers", "Account");
         }
 
@@ -128,6 +151,9 @@ namespace Payments.Controllers
         public async Task<ActionResult> UnBlockBankAccount(int? id)
         {
             await bankAccountService.UnBlockBankAccount(id);
+
+            logger.Info("Банковский счет {0} разблокирован администратором", id);
+
             return RedirectToAction("DataUsers", "Account");
         }
 
@@ -138,31 +164,44 @@ namespace Payments.Controllers
         public async Task<ActionResult> BlockSelfBankAccount(int? id)
         {
             await bankAccountService.BlockSelfBankAccount(id);
+
+            logger.Info("Банковский счет {0} заблокирован клиентом", id);
+
             return RedirectToAction("Security", "BankAccount");
         }
 
-        // Запрос клиента администратору
-        // разблокировать счет
+        // Запрос от клиента администратору разблокировать счет
         [LoggedExceptionFilter]
         [Authorize(Roles = "client")]
         public async Task<ActionResult> RequestUnblockBankAccount(int? id)
         {
             await bankAccountService.RequestUnblockBankAccount(id);
+
+            logger.Info("Клиент подал заявку на разблокирование счета {0}", id);
+
             return RedirectToAction("Security", "BankAccount");
         }
 
         // Клиент может увидеть данные о заблокированных
         // и незаблокированных банковских счетах
         // При необходимости заблокировать банковский счет
+        [LoggedExceptionFilter]
         [Authorize(Roles = "client")]
         public async Task<ActionResult> Security()
         {
             string nameCurrentUser = User.Identity.Name;
-            var bankAccountsUserDTO = await bankAccountService.GetAllBankAccountsUserAsync(nameCurrentUser);
+            string userId = await UserService.FindUserIdAsync(nameCurrentUser);
+
+            logger.Info("Клиент {0} запросил информацию о своих счетах",
+                userId);
+
+            var bankAccountsUserDTO = await bankAccountService.GetAllBankAccountsUserAsync(userId);
+
             var mapper = new MapperConfiguration(cfg => cfg.CreateMap<BankAccountSecurityDTO,
                BankAccountSecurityModel>()).CreateMapper();
             var bankAccountsUser = mapper.Map<IEnumerable<BankAccountSecurityDTO>,
                 IEnumerable<BankAccountSecurityModel>>(bankAccountsUserDTO);
+
             return View(bankAccountsUser);
         }
     }

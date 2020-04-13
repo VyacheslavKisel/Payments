@@ -9,7 +9,7 @@ namespace Payments.BLL.Interfaces
 {
     public interface IPaymentService
     {
-        Task<IEnumerable<PaymentBankAccountDTO>> PaymentData(int id);
+        Task<IEnumerable<PaymentBankAccountDTO>> PaymentData(int? id);
         Task PreparePayment(PreparationPaymentDTO preparationPaymentDTO);
         Task<IEnumerable<PreparedPaymentDTO>> FindPreparedPayments(IEnumerable<int> bankAccountsIds);
         Task ReplenishBankAccount(ReplenishBankAccountDTO replenishBankAccountDTO);

@@ -1,4 +1,5 @@
-﻿using Payments.BLL.BusinessModels;
+﻿using NLog;
+using Payments.BLL.BusinessModels;
 using Payments.BLL.DTO.BankAccount;
 using Payments.BLL.Infrastructure;
 using Payments.BLL.Interfaces;
@@ -17,6 +18,7 @@ namespace Payments.BLL.Services
     public class BankAccountService : IBankAccountService
     {
         private IUnitOfWork database;
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         public BankAccountService(IUnitOfWork unitOfWork)
         {
@@ -25,51 +27,89 @@ namespace Payments.BLL.Services
 
         public async Task CreateBankAccount(CreatureBankAccountDTO creatureBankAccountDTO)
         {
-            BankAccount existingNumberBankAccount;
-            string formedNumberBankAccount;
-            do
+            try
             {
-                existingNumberBankAccount = null;
-                formedNumberBankAccount = MethodsBankAccount.FormNumberAccount();
-                existingNumberBankAccount = await database.BankAccounts
-                    .FindAsync(p => p.NumberAccount == formedNumberBankAccount);
+                BankAccount existingNumberBankAccount;
+                string formedNumberBankAccount;
+                do
+                {
+                    existingNumberBankAccount = null;
+                    formedNumberBankAccount = MethodsBankAccount.FormNumberAccount();
+                    existingNumberBankAccount = await database.BankAccounts
+                        .FindAsync(p => p.NumberAccount == formedNumberBankAccount);
+                }
+                while (existingNumberBankAccount != null);
+                BankAccount bankAccount = new BankAccount()
+                {
+                    NumberCard = creatureBankAccountDTO.NumberCard,
+                    Name = creatureBankAccountDTO.Name,
+                    Balance = 20000,
+                    ApplicationUserId = creatureBankAccountDTO.ApplicationUserId,
+                    LockoutEnabled = false,
+                    RequestUnblock = false,
+                    NumberAccount = formedNumberBankAccount
+                };
+                database.BankAccounts.Create(bankAccount);
+                await database.SaveAsync();
             }
-            while (existingNumberBankAccount != null);
-            BankAccount bankAccount = new BankAccount()
+            catch (Exception exception)
             {
-                NumberCard = creatureBankAccountDTO.NumberCard,
-                Name = creatureBankAccountDTO.Name,
-                Balance = 20000,
-                ApplicationUserId = creatureBankAccountDTO.ApplicationUserId,
-                LockoutEnabled = false,
-                RequestUnblock = false,
-                NumberAccount = formedNumberBankAccount
-            };
-            database.BankAccounts.Create(bankAccount);
-            await database.SaveAsync();
+                logger.Error($"{exception.Message} {exception.StackTrace}");
+            }
         }
 
         public async Task<IEnumerable<BankAccountUserDTO>> BankAccountsData(string currentUserId)
         {
-            IEnumerable<BankAccount> bankAccountsAll = await database.BankAccounts.
-                FindAllAsync(bankAccount => bankAccount.ApplicationUserId == currentUserId &&
-                bankAccount.LockoutEnabled == false);
-            var bankAccountsUser = bankAccountsAll
-                .Select(bankAccount => new BankAccountUserDTO(bankAccount.Id, bankAccount.NumberAccount, bankAccount.NumberCard,
-                bankAccount.Name, bankAccount.Balance))
-                .ToList();
+            IEnumerable<BankAccountUserDTO> bankAccountsUser = null;
+            if (currentUserId == null || await database.UserManager.FindByIdAsync(currentUserId) == null)
+            {
+                throw new Exception("Не возможно найти банковские счета, так как не существует пользователя с запрашиваемым id");
+            }
+            else
+            {
+                try
+                {
+                    IEnumerable<BankAccount> bankAccountsAll = await database.BankAccounts.
+                    FindAllAsync(bankAccount => bankAccount.ApplicationUserId == currentUserId &&
+                    bankAccount.LockoutEnabled == false);
+                    bankAccountsUser = bankAccountsAll
+                        .Select(bankAccount => new BankAccountUserDTO(bankAccount.Id, bankAccount.NumberAccount, bankAccount.NumberCard,
+                        bankAccount.Name, bankAccount.Balance))
+                        .ToList();
+                }
+                catch (Exception exception)
+                {
+                    logger.Error($"{exception.Message} {exception.StackTrace}");
+                }
+            }
+           
             return bankAccountsUser;
         }
 
         public async Task<IEnumerable<BankAccountDataForAdminDTO>> BankAccountsDataForAdmin(string id)
         {
-            IEnumerable<BankAccount> bankAccountsAll = await database.BankAccounts
-                .FindAllAsync(bankAccount => bankAccount.ApplicationUserId == id);
-            var bankAccountsUser = bankAccountsAll
-                .Select(bankAccount => new BankAccountDataForAdminDTO(bankAccount.Id, bankAccount.NumberAccount,
-                bankAccount.NumberCard, bankAccount.Name, bankAccount.Balance,
-                bankAccount.LockoutEnabled, bankAccount.RequestUnblock))
-                .ToList();
+            IEnumerable<BankAccountDataForAdminDTO> bankAccountsUser = null;
+            if (id == null || await database.UserManager.FindByIdAsync(id) == null)
+            {
+                throw new Exception("Не возможно найти банковские счета, так как не существует пользователя с запрашиваемым id");
+            }
+            else
+            {
+                try
+                {
+                    IEnumerable<BankAccount> bankAccountsAll = await database.BankAccounts
+                    .FindAllAsync(bankAccount => bankAccount.ApplicationUserId == id);
+                    bankAccountsUser = bankAccountsAll
+                        .Select(bankAccount => new BankAccountDataForAdminDTO(bankAccount.Id, bankAccount.NumberAccount,
+                        bankAccount.NumberCard, bankAccount.Name, bankAccount.Balance,
+                        bankAccount.LockoutEnabled, bankAccount.RequestUnblock))
+                        .ToList();
+                }
+                catch (Exception exception)
+                {
+                    logger.Error($"{exception.Message} {exception.StackTrace}");
+                }
+            }         
             return bankAccountsUser;
         }
 
@@ -77,20 +117,27 @@ namespace Payments.BLL.Services
         {
             if (id == null)
             {
-                throw new Exception();
+                throw new Exception("Не существует банковского счета с запрашиваемым id");
             }
             else
             {
                 BankAccount bankAccount = await database.BankAccounts.GetAsync((int)id);
                 if (bankAccount != null)
                 {
-                    bankAccount.LockoutEnabled = true;
-                    database.BankAccounts.Update(bankAccount);
-                    await database.SaveAsync();
+                    try
+                    {
+                        bankAccount.LockoutEnabled = true;
+                        database.BankAccounts.Update(bankAccount);
+                        await database.SaveAsync();
+                    }
+                    catch (Exception exception)
+                    {
+                        logger.Error($"{exception.Message} {exception.StackTrace}");
+                    }
                 }
                 else
                 {
-                    throw new Exception();
+                    throw new Exception("Не существует банковского счета с запрашиваемым id");
                 }
             }
         }
@@ -99,21 +146,28 @@ namespace Payments.BLL.Services
         {
             if (id == null)
             {
-                throw new Exception();
+                throw new Exception("Не существует банковского счета с запрашиваемым id");
             }
             else
             {
                 BankAccount bankAccount = await database.BankAccounts.GetAsync((int)id);
                 if (bankAccount != null)
                 {
-                    bankAccount.LockoutEnabled = false;
-                    bankAccount.RequestUnblock = false;
-                    database.BankAccounts.Update(bankAccount);
-                    await database.SaveAsync();
+                    try
+                    {
+                        bankAccount.LockoutEnabled = false;
+                        bankAccount.RequestUnblock = false;
+                        database.BankAccounts.Update(bankAccount);
+                        await database.SaveAsync();
+                    }
+                    catch (Exception exception)
+                    {
+                        logger.Error($"{exception.Message} {exception.StackTrace}");
+                    }
                 }
                 else
                 {
-                    throw new Exception();
+                    throw new Exception("Не существует банковского счета с запрашиваемым id");
                 }
             }
         }
@@ -122,20 +176,27 @@ namespace Payments.BLL.Services
         {
             if (id == null)
             {
-                throw new Exception();
+                throw new Exception("Не существует банковского счета с запрашиваемым id");
             }
             else
             {
                 BankAccount bankAccount = await database.BankAccounts.GetAsync((int)id);
                 if (bankAccount != null)
                 {
-                    bankAccount.LockoutEnabled = true;
-                    database.BankAccounts.Update(bankAccount);
-                    await database.SaveAsync();
+                    try
+                    {
+                        bankAccount.LockoutEnabled = true;
+                        database.BankAccounts.Update(bankAccount);
+                        await database.SaveAsync();
+                    }
+                    catch (Exception exception)
+                    {
+                        logger.Error($"{exception.Message} {exception.StackTrace}");
+                    }
                 }
                 else
                 {
-                    throw new Exception();
+                    throw new Exception("Не существует банковского счета с запрашиваемым id");
                 }
             }
         }
@@ -144,29 +205,44 @@ namespace Payments.BLL.Services
         {
             if (id == null)
             {
-                throw new Exception();
+                throw new Exception("Не существует банковского счета с запрашиваемым id");
             }
             else
             {
                 BankAccount bankAccount = await database.BankAccounts.GetAsync((int)id);
                 if (bankAccount != null)
                 {
-                    bankAccount.RequestUnblock = true;
-                    database.BankAccounts.Update(bankAccount);
-                    await database.SaveAsync();
+                    try
+                    {
+                        bankAccount.RequestUnblock = true;
+                        database.BankAccounts.Update(bankAccount);
+                        await database.SaveAsync();
+                    }
+                    catch (Exception exception)
+                    {
+                        logger.Error($"{exception.Message} {exception.StackTrace}");
+                    }
                 }
                 else
                 {
-                    throw new Exception();
+                    throw new Exception("Не существует банковского счета с запрашиваемым id");
                 }
             }
         }
 
         public async Task CheckBankAccount(string numberBankAccount)
         {
-            BankAccount bankAccount = await database.BankAccounts
+            BankAccount bankAccount = null;
+            try
+            {
+                bankAccount = await database.BankAccounts
                     .FindAsync(b => b.NumberAccount == numberBankAccount);
-            if(bankAccount == null)
+            }
+            catch (Exception exception)
+            {
+                logger.Error($"{exception.Message} {exception.StackTrace}");
+            }
+            if (bankAccount == null)
             {
                 throw new ValidationBusinessLogicException("Нет номера счета в текущем банке", "NumberBankAccount");
             }
@@ -174,26 +250,49 @@ namespace Payments.BLL.Services
 
         public async Task<IEnumerable<int>> FindBankAccoutsForPreparedPayments(string applicationUserId)
         {
-            IEnumerable<BankAccount> bankAccountsAll = await database.BankAccounts
-                .FindAllAsync(bankAccount => bankAccount.ApplicationUserId == applicationUserId 
-                && bankAccount.LockoutEnabled == false);
             List<int> bankAccountsIds = new List<int>();
-            foreach (var item in bankAccountsAll)
+            try
             {
-                bankAccountsIds.Add(item.Id);
+                IEnumerable<BankAccount> bankAccountsAll = await database.BankAccounts
+               .FindAllAsync(bankAccount => bankAccount.ApplicationUserId == applicationUserId
+               && bankAccount.LockoutEnabled == false);
+                foreach (var item in bankAccountsAll)
+                {
+                    bankAccountsIds.Add(item.Id);
+                }
+            }
+            catch (Exception exception)
+            {
+                logger.Error($"{exception.Message} {exception.StackTrace}");
             }
             return bankAccountsIds;
         }
 
         public async Task<IEnumerable<BankAccountSecurityDTO>> GetAllBankAccountsUserAsync(string currentUserId)
         {
-            ApplicationUser currentUser = await database.UserManager.FindByNameAsync(currentUserId);
-            IEnumerable<BankAccount> bankAccountsAll = await database.BankAccounts.
-                FindAllAsync(bankAccount => bankAccount.ApplicationUserId == currentUser.Id);
-            var bankAccountsUser = bankAccountsAll
-                .Select(bankAccount => new BankAccountSecurityDTO(bankAccount.Id, bankAccount.NumberAccount, bankAccount.NumberCard,
-                bankAccount.Name, bankAccount.Balance, bankAccount.LockoutEnabled, bankAccount.RequestUnblock))
-                .ToList();
+            IEnumerable<BankAccountSecurityDTO> bankAccountsUser = null;
+            if (currentUserId == null || await database.UserManager.FindByIdAsync(currentUserId) == null)
+            {
+                throw new Exception("Не возможно найти банковские счета, так как не существует пользователя с запрашиваемым id");
+            }
+            else
+            {
+                try
+                {
+                    ApplicationUser currentUser = await database.UserManager.FindByIdAsync(currentUserId);
+                    IEnumerable<BankAccount> bankAccountsAll = await database.BankAccounts.
+                        FindAllAsync(bankAccount => bankAccount.ApplicationUserId == currentUser.Id);
+                    bankAccountsUser = bankAccountsAll
+                        .Select(bankAccount => new BankAccountSecurityDTO(bankAccount.Id, bankAccount.NumberAccount, bankAccount.NumberCard,
+                        bankAccount.Name, bankAccount.Balance, bankAccount.LockoutEnabled, bankAccount.RequestUnblock))
+                        .ToList();
+                }
+                catch (Exception exception)
+                {
+                    logger.Error($"{exception.Message} {exception.StackTrace}");
+                }
+            }
+           
             return bankAccountsUser;
         }
     }

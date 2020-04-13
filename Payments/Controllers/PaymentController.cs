@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNet.Identity.Owin;
+using NLog;
 using Payments.BLL.DTO.Payment;
 using Payments.BLL.Infrastructure;
 using Payments.BLL.Interfaces;
@@ -23,8 +24,8 @@ namespace Payments.Controllers
     public class PaymentController : Controller
     {
         private IBankAccountService bankAccountService;
-
         private IPaymentService paymentService;
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         public PaymentController(IBankAccountService bankAccountService, IPaymentService paymentService)
         {
@@ -41,8 +42,11 @@ namespace Payments.Controllers
         }
 
         // Осуществленные платежи
-        public async Task<ActionResult> PaymentData(int id, string sortOrder)
+        [LoggedExceptionFilter]
+        public async Task<ActionResult> PaymentData(int? id, string sortOrder)
         {
+            logger.Info("Клиент запросил информацию об осуществленных платежах банковского счета с id {0}", id);
+
             ViewBag.BankAccountId = id;
             var paymentsBankAccountDTO = await paymentService.PaymentData(id);
             var mapper = new MapperConfiguration(cfg => cfg.CreateMap<PaymentBankAccountDTO,
@@ -75,10 +79,14 @@ namespace Payments.Controllers
         public async Task<ActionResult> PreparedPaymentsData()
         {
             string nameCurrentUser = User.Identity.Name;
-            string idCurrentUser = await UserService.FindUserIdAsync(nameCurrentUser);
+            string userId = await UserService.FindUserIdAsync(nameCurrentUser);
+
+            logger.Info("Клиент {0} запросил информацию об подготовленных платежах", userId);
+
             IEnumerable<int> bankAccountsIds = await bankAccountService
-                .FindBankAccoutsForPreparedPayments(idCurrentUser);
+                .FindBankAccoutsForPreparedPayments(userId);
             var preparedPaymentsBankAccountDTO = await paymentService.FindPreparedPayments(bankAccountsIds);
+
             var mapper = new MapperConfiguration(cfg => cfg.CreateMap<PreparedPaymentDTO,
                 PreparedPayment>()).CreateMapper();
             var preparedPaymentsBankAccount = mapper.Map<IEnumerable<PreparedPaymentDTO>,
@@ -107,6 +115,9 @@ namespace Payments.Controllers
                 var paymentsCurrentBankAccount = mapper.Map<PreparationPaymentModel,
                      PreparationPaymentDTO>(model);
                 await paymentService.PreparePayment(paymentsCurrentBankAccount);
+
+                logger.Info("Клиент подготовил платеж для банковского счета {0}", model.BankAccountId);
+
                 return RedirectToAction("PreparedPaymentsData", "Payment");
             }
             return View(model);
@@ -140,6 +151,10 @@ namespace Payments.Controllers
                 var paymentsCurrentBankAccount = mapper.Map<ReplenishBankAccountModel,
                      ReplenishBankAccountDTO>(model);
                 await paymentService.ReplenishBankAccount(paymentsCurrentBankAccount);
+
+                logger.Info("Клиент подготовил пополнение с помощью банковского счета id = {0} " +
+                    "банковский счет с NumberBankAccount = {1}", model.BankAccountId, model.NumberBankAccount);
+
                 return RedirectToAction("PreparedPaymentsData");
             }
             return View(model);
@@ -153,7 +168,14 @@ namespace Payments.Controllers
                PreparedPaymentDTO>()).CreateMapper();
             var paymentsCurrentBankAccount = mapper.Map<IEnumerable<PreparedPayment>,
                 IEnumerable<PreparedPaymentDTO>>(model);
+
             await paymentService.Pay(paymentsCurrentBankAccount);
+
+            string userName = User.Identity.Name;
+            string userId = await UserService.FindUserIdAsync(userName);
+
+            logger.Info("Клиент {0} подтвердил платежи", userId);
+
             return RedirectToAction("PreparedPaymentsData", "Payment");
         }
 
@@ -162,6 +184,9 @@ namespace Payments.Controllers
         public async Task<ActionResult> RejectPayment(int? id)
         {
             await paymentService.RejectPayment(id);
+
+            logger.Info("Клиент отклонил платеж {0}", id);
+
             return RedirectToAction("PreparedPaymentsData", "Payment");
         }
     }

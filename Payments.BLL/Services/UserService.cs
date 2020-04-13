@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.AspNet.Identity;
+using NLog;
 using Payments.BLL.DTO.Account;
 using Payments.BLL.Infrastructure;
 using Payments.BLL.Interfaces;
@@ -19,6 +20,7 @@ namespace Payments.BLL.Services
     public class UserService : IUserService
     {
         private IUnitOfWork database;
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         public UserService(IUnitOfWork unitOfWork)
         {
@@ -27,122 +29,183 @@ namespace Payments.BLL.Services
 
         public async Task<OperationDetails> Create(UserDTO userDTO)
         {
-            ApplicationUser user = await database.UserManager.FindByEmailAsync(userDTO.Email);
-            if (user == null)
+            try
             {
-                user = new ApplicationUser
+                ApplicationUser user = await database.UserManager.FindByEmailAsync(userDTO.Email);
+                if (user == null)
                 {
-                    Email = userDTO.Email,
-                    UserName = userDTO.Email
-                };
-                var result = await database.UserManager.CreateAsync(user, userDTO.Password);
-                if (result.Errors.Count() > 0)
-                {
-                    return new OperationDetails(false, result.Errors.FirstOrDefault(), "");
+                    user = new ApplicationUser
+                    {
+                        Email = userDTO.Email,
+                        UserName = userDTO.Email
+                    };
+                    var result = await database.UserManager.CreateAsync(user, userDTO.Password);
+                    if (result.Errors.Count() > 0)
+                    {
+                        return new OperationDetails(false, result.Errors.FirstOrDefault(), "");
+                    }
+                    await database.UserManager.AddToRoleAsync(user.Id, userDTO.Role);
+                    await database.SaveAsync();
+                    return new OperationDetails(true, "Регистрация успешно пройдена", "");
                 }
-                await database.UserManager.AddToRoleAsync(user.Id, userDTO.Role);
-                await database.SaveAsync();
-                return new OperationDetails(true, "Регистрация успешно пройдена", "");
             }
-            else
+            catch (Exception exception)
             {
-                return new OperationDetails(false, "Пользователь с таким именем уже существует", "Email");
+                logger.Error($"{exception.Message} {exception.StackTrace}");
             }
+            return new OperationDetails(false, "Пользователь с таким именем уже существует", "Email");
         }
 
         public async Task<ClaimsIdentity> Authenticate(UserDTO userDTO)
         {
             ClaimsIdentity claim = null;
-            ApplicationUser user = await database.UserManager.FindAsync(userDTO.Email, userDTO.Password);
-            if (user != null)
+            try
             {
-                claim = await database.UserManager.CreateIdentityAsync(user,
-                    DefaultAuthenticationTypes.ApplicationCookie);
+                ApplicationUser user = await database.UserManager.FindAsync(userDTO.Email, userDTO.Password);
+                if (user != null)
+                {
+                    claim = await database.UserManager.CreateIdentityAsync(user,
+                        DefaultAuthenticationTypes.ApplicationCookie);
+                }
+            }
+            catch (Exception exception)
+            {
+                logger.Error($"{exception.Message} {exception.StackTrace}");
             }
             return claim;
         }
 
         public async Task<bool> IsLockedOutAsync(string userId)
         {
-            return await database.UserManager.IsLockedOutAsync(userId);
+            try
+            {
+                return await database.UserManager.IsLockedOutAsync(userId);
+            }
+            catch (Exception exception)
+            {
+                logger.Error($"{exception.Message} {exception.StackTrace}");
+                return true;
+            }
         }
 
         public List<DataUserForAdminDTO> GetUsers()
         {
-            var users = database.UserManager.Users.ToList();
-            var mapper = new MapperConfiguration(cfg => cfg.CreateMap<ApplicationUser,
-              DataUserForAdminDTO>()).CreateMapper();
-            var usersDTO = mapper.Map<List<ApplicationUser>,
-                 List<DataUserForAdminDTO>>(users);
+            List<DataUserForAdminDTO> usersDTO = null;
+            try
+            {
+                var users = database.UserManager.Users.ToList();
+                var mapper = new MapperConfiguration(cfg => cfg.CreateMap<ApplicationUser,
+                  DataUserForAdminDTO>()).CreateMapper();
+                usersDTO = mapper.Map<List<ApplicationUser>,
+                     List<DataUserForAdminDTO>>(users);
+            }
+            catch (Exception exception)
+            {
+                logger.Error($"{exception.Message} {exception.StackTrace}");
+            }
             return usersDTO;
         }
 
         public async Task<IEnumerable<FullDataUserForAdminDTO>> GetDataAboutUsersAsync(
             List<DataUserForAdminDTO> users, string adminId)
         {
-            IEnumerable<BankAccount> bankAccountsUser = null;
-            IEnumerable<BankAccount> bankAccountsUserRequestUnblock = null;
-            List<int> countBankAccountsUser = new List<int>();
-            foreach (var item in users)
-            {
-                bankAccountsUser = await database.BankAccounts
-                .FindAllAsync(p => p.ApplicationUserId == item.Id);
-                bankAccountsUserRequestUnblock = bankAccountsUser.Where(p => p.RequestUnblock == true);
-                countBankAccountsUser.Add(bankAccountsUserRequestUnblock.Count());
-            }
-            int i = 0;
-            DateTime? lockoutEndDate = null;
             List<FullDataUserForAdminDTO> dataAboutUsersDTOs =
-                new List<FullDataUserForAdminDTO>();
-            foreach (var item in users)
+               new List<FullDataUserForAdminDTO>();
+            try
             {
-                lockoutEndDate = item.LockoutEndDateUtc;
-                if (lockoutEndDate != null)
+                IEnumerable<BankAccount> bankAccountsUser = null;
+                IEnumerable<BankAccount> bankAccountsUserRequestUnblock = null;
+                List<int> countBankAccountsUser = new List<int>();
+                foreach (var item in users)
                 {
-                    DateTime localLockoutEndDate = (DateTime)lockoutEndDate;
-                    lockoutEndDate = (DateTime?)localLockoutEndDate.AddHours(3);
+                    bankAccountsUser = await database.BankAccounts
+                    .FindAllAsync(p => p.ApplicationUserId == item.Id);
+                    bankAccountsUserRequestUnblock = bankAccountsUser.Where(p => p.RequestUnblock == true);
+                    countBankAccountsUser.Add(bankAccountsUserRequestUnblock.Count());
                 }
-                if (item.Id != adminId)
+                int i = 0;
+                DateTime? lockoutEndDate = null;
+                foreach (var item in users)
                 {
-                    dataAboutUsersDTOs.Add(new FullDataUserForAdminDTO(
-                        item.Id, item.Email, item.UserName, item.LockoutEnabled,
-                        lockoutEndDate, countBankAccountsUser[i]));
+                    lockoutEndDate = item.LockoutEndDateUtc;
+                    if (lockoutEndDate != null)
+                    {
+                        DateTime localLockoutEndDate = (DateTime)lockoutEndDate;
+                        lockoutEndDate = (DateTime?)localLockoutEndDate.AddHours(3);
+                    }
+                    if (item.Id != adminId)
+                    {
+                        dataAboutUsersDTOs.Add(new FullDataUserForAdminDTO(
+                            item.Id, item.Email, item.UserName, item.LockoutEnabled,
+                            lockoutEndDate, countBankAccountsUser[i]));
+                    }
+                    i++;
                 }
-                i++;
+            }
+            catch (Exception exception)
+            {
+                logger.Error($"{exception.Message} {exception.StackTrace}");
             }
             return dataAboutUsersDTOs;
         }
 
         public async Task<string> FindUserIdAsync(string nameCurrentUser)
         {
-            ApplicationUser currentUser = await database.UserManager.FindByNameAsync(nameCurrentUser);
-            return currentUser.Id;
+            try
+            {
+                ApplicationUser currentUser = await database.UserManager.FindByNameAsync(nameCurrentUser);
+                return currentUser.Id;
+            }
+            catch (Exception exception)
+            {
+                logger.Error($"{exception.Message} {exception.StackTrace}");
+                return null;
+            }
         }
 
         public async Task<UserBlockDataDTO> FindUserForBlockAsync(string id)
         {
-            ApplicationUser applicationUser = await database.UserManager.FindByIdAsync(id);
-            DateTime? lockoutEndDate = applicationUser.LockoutEndDateUtc;
-            if (lockoutEndDate != null)
+            UserBlockDataDTO userBlockDataDTO = null;
+            if (id == null)
             {
-                DateTime localLockoutEndDate = (DateTime)lockoutEndDate;
-                lockoutEndDate = (DateTime?)localLockoutEndDate.AddHours(3);
+                throw new Exception("Не существует пользователя с запрашиваемым id");
             }
-            UserBlockDataDTO userBlockData = new UserBlockDataDTO()
+            try
             {
-                UserId = applicationUser.Id,
-                Email = applicationUser.Email,
-                LockoutEnabled = applicationUser.LockoutEnabled
-            };
-            if (applicationUser.LockoutEndDateUtc == null)
-            {
-                userBlockData.DateTimeBlock = DateTime.Now;
+                ApplicationUser applicationUser = await database.UserManager.FindByIdAsync(id);
+                if (applicationUser == null)
+                {
+                    throw new Exception("Не существует пользователя с запрашиваемым id");
+                }
+                else
+                {
+                    DateTime? lockoutEndDate = applicationUser.LockoutEndDateUtc;
+                    if (lockoutEndDate != null)
+                    {
+                        DateTime localLockoutEndDate = (DateTime)lockoutEndDate;
+                        lockoutEndDate = (DateTime?)localLockoutEndDate.AddHours(3);
+                    }
+                    userBlockDataDTO = new UserBlockDataDTO()
+                    {
+                        UserId = applicationUser.Id,
+                        Email = applicationUser.Email,
+                        LockoutEnabled = applicationUser.LockoutEnabled
+                    };
+                    if (applicationUser.LockoutEndDateUtc == null)
+                    {
+                        userBlockDataDTO.DateTimeBlock = DateTime.Now;
+                    }
+                    else
+                    {
+                        userBlockDataDTO.DateTimeBlock = (DateTime)lockoutEndDate;
+                    }
+                }
             }
-            else
+            catch (Exception exception)
             {
-                userBlockData.DateTimeBlock = (DateTime)lockoutEndDate;
+                logger.Error($"{exception.Message} {exception.StackTrace}");
             }
-            return userBlockData;
+            return userBlockDataDTO;
         }
 
         public void CheckDateBlock(DateTime dateBlock)
@@ -156,50 +219,84 @@ namespace Payments.BLL.Services
 
         public async Task BlockUserAccount(UserBlockDataDTO userBlockDataDTO)
         {
-            var result = await database.UserManager.SetLockoutEnabledAsync(userBlockDataDTO.UserId, true);
-            if (result.Succeeded)
+            try
             {
-                result = await database.UserManager
-                    .SetLockoutEndDateAsync(userBlockDataDTO.UserId, (DateTimeOffset)userBlockDataDTO.DateTimeBlock);
-                ApplicationUser applicationUser = await database.UserManager
-                    .FindByIdAsync(userBlockDataDTO.UserId);
+                CheckDateBlock(userBlockDataDTO.DateTimeBlock);
+                var result = await database.UserManager.SetLockoutEnabledAsync(userBlockDataDTO.UserId, true);
+                if (result.Succeeded)
+                {
+                    result = await database.UserManager
+                        .SetLockoutEndDateAsync(userBlockDataDTO.UserId, (DateTimeOffset)userBlockDataDTO.DateTimeBlock);
+                    ApplicationUser applicationUser = await database.UserManager
+                        .FindByIdAsync(userBlockDataDTO.UserId);
+                }
+            }
+            catch (Exception exception)
+            {
+                logger.Error($"{exception.Message} {exception.StackTrace}");
             }
         }
 
         public async Task<UserBlockDataDTO> FindUserForUnBlockAsync(string id)
         {
-            ApplicationUser applicationUser = await database.UserManager.FindByIdAsync(id);
-            DateTime? lockoutEndDate = applicationUser.LockoutEndDateUtc;
-            if (lockoutEndDate != null)
+            if (id == null)
             {
-                DateTime localLockoutEndDate = (DateTime)lockoutEndDate;
-                lockoutEndDate = (DateTime?)localLockoutEndDate.AddHours(3);
+                throw new Exception("Не существует пользователя с запрашиваемым id");
             }
-            UserBlockDataDTO userBlockDataDTO = new UserBlockDataDTO()
+            UserBlockDataDTO userBlockDataDTO = null;
+            try
             {
-                UserId = applicationUser.Id,
-                Email = applicationUser.Email,
-                LockoutEnabled = applicationUser.LockoutEnabled,
-            };
-            if (applicationUser.LockoutEndDateUtc == null)
-            {
-                userBlockDataDTO.DateTimeBlock = DateTime.Now;
+                ApplicationUser applicationUser = await database.UserManager.FindByIdAsync(id);
+                if (applicationUser == null)
+                {
+                    throw new Exception("Не существует пользователя с запрашиваемым id");
+                }
+                else
+                {
+                    DateTime? lockoutEndDate = applicationUser.LockoutEndDateUtc;
+                    if (lockoutEndDate != null)
+                    {
+                        DateTime localLockoutEndDate = (DateTime)lockoutEndDate;
+                        lockoutEndDate = (DateTime?)localLockoutEndDate.AddHours(3);
+                    }
+                    userBlockDataDTO = new UserBlockDataDTO()
+                    {
+                        UserId = applicationUser.Id,
+                        Email = applicationUser.Email,
+                        LockoutEnabled = applicationUser.LockoutEnabled,
+                    };
+                    if (applicationUser.LockoutEndDateUtc == null)
+                    {
+                        userBlockDataDTO.DateTimeBlock = DateTime.Now;
+                    }
+                    else
+                    {
+                        userBlockDataDTO.DateTimeBlock = (DateTime)lockoutEndDate;
+                    }
+                }
             }
-            else
+            catch (Exception exception)
             {
-                userBlockDataDTO.DateTimeBlock = (DateTime)lockoutEndDate;
+                logger.Error($"{exception.Message} {exception.StackTrace}");
             }
             return userBlockDataDTO;
         }
 
         public async Task UnblockUserAccount(UserBlockDataDTO userBlockDataDTO)
         {
-            var result = await database.UserManager.SetLockoutEnabledAsync(userBlockDataDTO.UserId, true);
-            if (result.Succeeded)
+            try
             {
-                result = await database.UserManager.SetLockoutEndDateAsync(userBlockDataDTO.UserId, DateTimeOffset.UtcNow);
-                result = await database.UserManager.SetLockoutEnabledAsync(userBlockDataDTO.UserId, false);
-                ApplicationUser applicationUser = database.UserManager.FindById(userBlockDataDTO.UserId);
+                var result = await database.UserManager.SetLockoutEnabledAsync(userBlockDataDTO.UserId, true);
+                if (result.Succeeded)
+                {
+                    result = await database.UserManager.SetLockoutEndDateAsync(userBlockDataDTO.UserId, DateTimeOffset.UtcNow);
+                    result = await database.UserManager.SetLockoutEnabledAsync(userBlockDataDTO.UserId, false);
+                    ApplicationUser applicationUser = database.UserManager.FindById(userBlockDataDTO.UserId);
+                }
+            }
+            catch (Exception exception)
+            {
+                logger.Error($"{exception.Message} {exception.StackTrace}");
             }
         }
 

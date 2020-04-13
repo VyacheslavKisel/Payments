@@ -2,10 +2,12 @@
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
+using NLog;
 using Payments.BLL.DTO.Account;
 using Payments.BLL.Infrastructure;
 using Payments.BLL.Interfaces;
 using Payments.BLL.Services;
+using Payments.Filters;
 using Payments.ViewModels;
 using Payments.ViewModels.Account;
 using System;
@@ -18,9 +20,11 @@ using System.Web.Mvc;
 
 namespace Payments.Controllers
 {
+    // Контроллер по работе с учетными записями пользователей
     public class AccountController : Controller
     {
         private IBankAccountService bankAccountService;
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         public AccountController(IBankAccountService bankAccountService)
         {
@@ -70,6 +74,9 @@ namespace Payments.Controllers
                     {
                         IsPersistent = true
                     }, claim);
+
+                    logger.Info("Зарегистрировался пользователь");
+
                     return RedirectToAction("Index", "Home");
                 }
                 else
@@ -115,23 +122,37 @@ namespace Payments.Controllers
                     {
                         IsPersistent = true
                     }, claim);
+
+                    logger.Info("Пользователь {0} вошел в свою учетную запись",
+                        await UserService.FindUserIdAsync(model.Email));
+
                     return RedirectToAction("Index", "Home");
                 }
             }
             return View(model);
         }
 
-        public ActionResult Logout()
+        public async Task<ActionResult> Logout()
         {
             AuthenticationManager.SignOut();
+
+            string userName = User.Identity.Name;
+
+            logger.Info("Пользователь {0} вышел из своей учетной записи",
+                        await UserService.FindUserIdAsync(userName));
+
             return RedirectToAction("Index", "Home");
         }
 
+        // Данные о пользователях
         [Authorize(Roles = "administrator")]
         public async Task<ActionResult> DataUsers()
         {
             var users = UserService.GetUsers();
             string adminId = User.Identity.GetUserId();
+
+            logger.Info("Администратор запросил данные о пользователях");
+
             var dataAboutApplicationUserForAdminsDTO = await UserService.GetDataAboutUsersAsync(users, adminId);
             var mapper = new MapperConfiguration(cfg => cfg.CreateMap<FullDataUserForAdminDTO,
               DataAboutApplicationUserForAdmin>()).CreateMapper();
@@ -141,19 +162,12 @@ namespace Payments.Controllers
         }
 
         // Блокировка пользователя
+        [LoggedExceptionFilter]
         [Authorize(Roles = "administrator")]
         public async Task<ActionResult> BlockUserAccount(string id)
         {
-            if (id == null)
-            {
-                return HttpNotFound();
-            }
-
             UserBlockDataDTO userBlockDataDTO = await UserService.FindUserForBlockAsync(id);
-            if (userBlockDataDTO == null)
-            {
-                return HttpNotFound();
-            }
+            
             var mapper = new MapperConfiguration(cfg => cfg.CreateMap<UserBlockDataDTO,
               UserBlockData>()).CreateMapper();
             var userBlockData = mapper.Map<UserBlockDataDTO,
@@ -180,24 +194,21 @@ namespace Payments.Controllers
                 var userBlockDataDTO = mapper.Map<UserBlockData,
                      UserBlockDataDTO>(userBlockData);
                 await UserService.BlockUserAccount(userBlockDataDTO);
+
+                logger.Info("Администратор заблокировал пользователя {0}", userBlockData.UserId);
+
                 return RedirectToAction("DataUsers");
             }
             return View(userBlockData);
         }
 
         // Разблокировка пользователей
+        [LoggedExceptionFilter]
         [Authorize(Roles = "administrator")]
         public async Task<ActionResult> UnBlockUserAccount(string id)
         {
-            if (id == null)
-            {
-                return HttpNotFound();
-            }
             UserBlockDataDTO userBlockDataDTO = await UserService.FindUserForUnBlockAsync(id);
-            if (userBlockDataDTO == null)
-            {
-                return HttpNotFound();
-            }
+           
             var mapper = new MapperConfiguration(cfg => cfg.CreateMap<UserBlockDataDTO,
               UserBlockData>()).CreateMapper();
             var userBlockData = mapper.Map<UserBlockDataDTO,
@@ -214,6 +225,9 @@ namespace Payments.Controllers
             var userBlockDataDTO = mapper.Map<UserBlockData,
                  UserBlockDataDTO>(userBlockData);
             await UserService.UnblockUserAccount(userBlockDataDTO);
+
+            logger.Info("Администратор разблокировал пользователя {0}", userBlockData.UserId);
+
             return RedirectToAction("DataUsers");
         }
     }
