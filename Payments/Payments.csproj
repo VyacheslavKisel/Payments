@@ -47,6 +47,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AutoMapper, Version=9.0.0.0, Culture=neutral, PublicKeyToken=be96cd2c38ef1005, processorArchitecture=MSIL">
+      <HintPath>..\packages\AutoMapper.9.0.0\lib\net461\AutoMapper.dll</HintPath>
+    </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.1.0\lib\net45\EntityFramework.dll</HintPath>
     </Reference>
@@ -158,11 +161,11 @@
     <Compile Include="Controllers\BankAccountController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\PaymentController.cs" />
+    <Compile Include="Filters\LoggedExceptionFilter.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Services\ServiceBankAccount.cs" />
     <Compile Include="ViewModels\Account\DataAboutApplicationUserForAdmin.cs" />
     <Compile Include="ViewModels\BankAccount\BankAccountSecurityModel.cs" />
     <Compile Include="ViewModels\BankAccount\BankAccountUser.cs" />
@@ -346,6 +349,10 @@
     <Content Include="Scripts\jquery-3.4.1.min.map" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Payments.BLL\Payments.BLL.csproj">
+      <Project>{bebbc8f1-f4aa-49c7-9a25-6eb8956253e5}</Project>
+      <Name>Payments.BLL</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Service\Payments.DAL.csproj">
       <Project>{bb2045f3-dc04-4fd9-84d7-441772b6c74f}</Project>
       <Name>Payments.DAL</Name>
