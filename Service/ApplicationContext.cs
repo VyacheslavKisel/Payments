@@ -12,13 +12,13 @@ namespace Service
     // Контекст базы данных
     public class ApplicationContext : IdentityDbContext<ApplicationUser>
     {
-        public ApplicationContext() : base("PaymentsContext") { }
+        public ApplicationContext() : base("name=AbcContext") { }
 
         public static ApplicationContext Create()
         {
             return new ApplicationContext();
         }
-
+        
         static ApplicationContext()
         {
             Database.SetInitializer<ApplicationContext>(new ApplicationContextInitializer());
